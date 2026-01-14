@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Magani Configs Ultra - Pro Gaming Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary: #00f2ff;
+            --secondary: #bc13fe;
+            --accent: #ff0055;
+            --success: #00ff88;
+            --bg-dark: #08080c;
+            --card-bg: rgba(15, 15, 20, 0.9);
+            --border-glow: rgba(0, 242, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            min-height: 100vh;
+            width: 100vw;
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px 0;
+        }
+
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .main-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 95%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-glow);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 1.5rem;
+            color: var(--primary);
+            filter: drop-shadow(0 0 5px var(--primary));
+        }
+
+        .logo-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .system-stats {
+            display: flex;
+            gap: 10px;
+        }
+
+        .stat-badge {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .stat-badge span {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .dashboard-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .panel-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px;
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+        }
+
+        /* Compact Action Buttons */
+        .action-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px;
+            border-radius: 12px;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn i {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .action-btn b {
+            font-size: 0.85rem;
+            display: block;
+        }
+
+        .action-btn span {
+            font-size: 0.6rem;
+            opacity: 0.5;
+            text-transform: uppercase;
+        }
+
+        .action-btn:hover {
+            border-color: var(--primary);
+            background: rgba(0, 242, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .btn-loading i { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .btn-success { border-color: var(--success) !important; background: rgba(0, 255, 136, 0.1) !important; }
+        .btn-success i { color: var(--success) !important; }
+
+        /* Visualization Area */
+        .monitor-panel {
+            grid-column: span 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        @media (min-width: 900px) {
+            .monitor-panel { grid-column: span 2; }
+        }
+
+        #chartContainer {
+            height: 150px;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Sliders */
+        .sliders-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .control-group {
+            background: rgba(255,255,255,0.02);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            margin-bottom: 8px;
+        }
+
+        .label-row span:last-child { color: var(--primary); }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--primary);
+        }
+
+        footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.3);
+            margin-top: 10px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            box-shadow: 0 0 5px var(--success);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-glow); border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+
+    <div class="main-wrapper">
+        <header>
+            <div class="logo-area">
+                <i class="fas fa-microchip logo-icon"></i>
+                <div class="logo-text">Magani configs</div>
+            </div>
+            <div class="system-stats">
+                <div class="stat-badge">FPS <span id="fps-counter">120</span></div>
+                <div class="stat-badge">PING <span id="ping-counter">12MS</span></div>
+                <div class="stat-badge">LOAD <span id="cpu-usage">14%</span></div>
+            </div>
+        </header>
+
+        <div class="dashboard-layout">
+            <!-- Optimization Grid -->
+            <div class="section-grid">
+                <div class="panel-card">
+                    <div class="card-title"><i class="fas fa-bolt"></i> Core Boost</div>
+                    <div class="action-list">
+                        <button class="action-btn" onclick="runProcess(this, 'bolt', 'Power Boost', 'Boosting...')">
+                            <i class="fas fa-bolt"></i>
+                            <b>Power Boost</b>
+                            <span>CPU/GPU</span>
+                        </button>
+                        <button class="action-btn" onclick="runProcess(this, 'microchip', 'Sens Touch', 'Optimizing...')">
+                            <i class="fas fa-microchip"></i>
+                            <b>Sens Touch</b>
+                            <span>Digitizer</span>
+                        </button>
+                        <button class="action-btn" onclick="runProcess(this, 'wind', 'Zero Lag', 'Cleaning...')">
+                            <i class="fas fa-wind"></i>
+                            <b>Zero Lag</b>
+                            <span>No Drops</span>
+                        </button>
+                        <button class="action-btn" onclick="runProcess(this, 'memory', 'RAM Purge', 'Freeing...')">
+                            <i class="fas fa-memory"></i>
+                            <b>RAM Purge</b>
+                            <span>Cache Clear</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="card-title"><i class="fas fa-gamepad"></i> Game Tools</div>
+                    <div class="action-list">
+                        <button class="action-btn" onclick="runProcess(this, 'crosshair', 'Auto Aim', 'Calibrating...')">
+                            <i class="fas fa-microchip"></i>
+                            <b>TOUCH VIEW</b>
+                            <span>Green TOUCH</span>
+                        </button>
+                        <button class="action-btn" onclick="runProcess(this, 'eye', 'Wall View', 'Scanning...')">
+                            <i class="fas fa-microchip"></i>
+                            <b> View</b>
+                            <span>Texture</span>
+                        </button>
+                        <button class="action-btn" onclick="runProcess(this, 'gauge-high', 'Speed Hack', 'Injecting...')">
+                            <i class="fas fa-microchip"></i>
+                            <b>Speed Up</b>
+                            <span>Movement</span>
+                        </button>
+                        <button class="action-btn" onclick="runProcess(this, 'shield-virus', 'Anti-Ban', 'Securing...')">
+                            <i class="fas fa-microchip"></i>
+                            <b>SPEED SUS</b>
+                            <span>Sensi - system</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitoring Grid -->
+            <div class="section-grid">
+                <div class="panel-card monitor-panel">
+                    <div class="card-title"><i class="fas fa-chart-line"></i> Performance Real-time</div>
+                    <div id="chartContainer">
+                        <canvas id="liveChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="card-title"><i class="fas fa-sliders"></i> Fine Tuning</div>
+                    <div class="sliders-grid">
+                        <div class="control-group">
+                            <div class="label-row"><span>Sensi</span><span id="v-sensi">85%</span></div>
+                            <input type="range" value="85" oninput="updateRange('v-sensi', this.value)">
+                        </div>
+                        <div class="control-group">
+                            <div class="label-row"><span>Scale</span><span id="v-res">100%</span></div>
+                            <input type="range" value="100" oninput="updateRange('v-res', this.value)">
+                        </div>
+                        <div class="control-group">
+                            <div class="label-row"><span>AA</span><span id="v-aa">4x</span></div>
+                            <input type="range" min="0" max="4" step="1" value="2" oninput="updateRangeAA(this.value)">
+                        </div>
+                        <div class="control-group">
+                            <div class="label-row"><span>FOV</span><span id="v-fov">90</span></div>
+                            <input type="range" min="60" max="120" value="90" oninput="updateRange('v-fov', this.value)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div><span class="status-dot"></span> ENGINE ACTIVE: v4.2.0</div>
+            <div>MAGANI CONFIGS &copy; 2026</div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        particlesJS('particles-js', {
+            "particles": {
+                "number": { "value": 60, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#00f2ff" },
+                "opacity": { "value": 0.2, "random": true },
+                "size": { "value": 2, "random": true },
+                "line_linked": { "enable": true, "distance": 150, "color": "#00f2ff", "opacity": 0.1, "width": 1 },
+                "move": { "enable": true, "speed": 1.5 }
+            }
+        });
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBeep(f, t, d, v = 0.05) {
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = t;
+            osc.frequency.setValueAtTime(f, audioCtx.currentTime);
+            g.gain.setValueAtTime(v, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d);
+            osc.connect(g);
+            g.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + d);
+        }
+
+        function runProcess(btn, icon, title, status) {
+            if (btn.classList.contains('btn-loading') || btn.classList.contains('btn-success')) return;
+            playBeep(200, 'square', 0.1);
+            btn.classList.add('btn-loading');
+            const originalIcon = btn.querySelector('i').className;
+            btn.querySelector('i').className = 'fas fa-spinner';
+            
+            setTimeout(() => {
+                btn.classList.remove('btn-loading');
+                btn.classList.add('btn-success');
+                btn.querySelector('i').className = 'fas fa-check';
+                playBeep(500, 'sine', 0.3);
+                setTimeout(() => {
+                    btn.classList.remove('btn-success');
+                    btn.querySelector('i').className = originalIcon;
+                }, 2000);
+            }, 1500);
+        }
+
+        function updateRange(id, val) { document.getElementById(id).innerText = val + (id.includes('fov') ? '' : '%'); }
+        function updateRangeAA(val) { document.getElementById('v-aa').innerText = ['OFF', '2x', '4x', '8x', '16x'][val]; }
+
+        const canvas = document.getElementById('liveChart');
+        const ctx = canvas.getContext('2d');
+        let chartData = Array(30).fill(30);
+
+        function drawChart() {
+            const w = canvas.width = canvas.parentElement.offsetWidth;
+            const h = canvas.height = canvas.parentElement.offsetHeight;
+            ctx.clearRect(0, 0, w, h);
+            chartData.push(Math.max(10, Math.min(90, chartData[chartData.length-1] + (Math.random()-0.5)*15)));
+            chartData.shift();
+            ctx.beginPath();
+            ctx.strokeStyle = '#00f2ff';
+            ctx.lineWidth = 2;
+            const step = w / (chartData.length - 1);
+            chartData.forEach((v, i) => {
+                const x = i * step;
+                const y = h - (v/100 * h);
+                if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            ctx.lineTo(w, h); ctx.lineTo(0, h);
+            const g = ctx.createLinearGradient(0, 0, 0, h);
+            g.addColorStop(0, 'rgba(0, 242, 255, 0.1)'); g.addColorStop(1, 'transparent');
+            ctx.fillStyle = g; ctx.fill();
+            document.getElementById('fps-counter').innerText = Math.round(110 + Math.random()*20);
+            document.getElementById('ping-counter').innerText = Math.round(10 + Math.random()*5) + 'MS';
+            document.getElementById('cpu-usage').innerText = Math.round(chartData[chartData.length-1]) + '%';
+            requestAnimationFrame(drawChart);
+        }
+        window.onload = drawChart;
+        document.addEventListener('mousedown', () => audioCtx.state === 'suspended' && audioCtx.resume());
+    </script>
+</body>
+</html>
