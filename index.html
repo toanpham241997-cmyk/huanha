@@ -1,480 +1,1131 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Magani Configs Ultra - Pro Gaming Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HÀ VĂN HUẤN - SHARE FREE</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        :root {
-            --primary: #00f2ff;
-            --secondary: #bc13fe;
-            --accent: #ff0055;
-            --success: #00ff88;
-            --bg-dark: #08080c;
-            --card-bg: rgba(15, 15, 20, 0.9);
-            --border-glow: rgba(0, 242, 255, 0.3);
-        }
+    :root {
+      --white: #ffffff;
+      --text: #f8fbff;
+      --muted: rgba(255,255,255,0.84);
+      --glass: rgba(255,255,255,0.12);
+      --glass-strong: rgba(255,255,255,0.18);
+      --line: rgba(255,255,255,0.55);
+      --shadow: 0 18px 50px rgba(0,0,0,0.35);
+      --shadow-soft: 0 10px 30px rgba(0,0,0,0.22);
+      --grad-main: linear-gradient(135deg, #ff5ea8, #ffcc4d, #59f1ff, #73ffa6);
+      --grad-btn: linear-gradient(135deg, #ff4d7e, #ff9950, #ffdd57);
+      --grad-btn-2: linear-gradient(135deg, #4cc9ff, #3b82f6, #7a5cff);
+      --grad-btn-3: linear-gradient(135deg, #ff65c3, #8b5cf6, #57d8ff);
+      --grad-btn-4: linear-gradient(135deg, #ff7f50, #ff4fd8, #7efcff);
+      --radius-xl: 30px;
+      --radius-lg: 24px;
+      --radius-md: 18px;
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+    html {
+      scroll-behavior: smooth;
+    }
 
-        body {
-            background-color: var(--bg-dark);
-            color: #fff;
-            font-family: 'Rajdhani', sans-serif;
-            min-height: 100vh;
-            width: 100vw;
-            overflow-x: hidden;
-            overflow-y: auto;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 20px 0;
-        }
+    *::selection {
+      background: rgba(255, 170, 210, 0.35);
+      color: #fff;
+    }
 
-        #particles-js {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
+    body {
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(rgba(8, 10, 24, 0.70), rgba(8, 10, 24, 0.74)),
+        url('https://images.unsplash.com/photo-1511300636408-a63a89df3482?auto=format&fit=crop&w=1800&q=80') center/cover no-repeat fixed;
+      overflow-x: hidden;
+    }
 
-        .main-wrapper {
-            position: relative;
-            z-index: 10;
-            width: 95%;
-            max-width: 1000px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-glow);
-            border-radius: 20px;
-            padding: 20px;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255, 110, 199, 0.18), transparent 28%),
+        radial-gradient(circle at 80% 12%, rgba(80, 232, 255, 0.16), transparent 22%),
+        radial-gradient(circle at 75% 82%, rgba(255, 214, 95, 0.16), transparent 24%);
+      pointer-events: none;
+      z-index: 0;
+    }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
+    .petals-layer {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 2;
+    }
 
-        .logo-area {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    .petal {
+      position: absolute;
+      top: -12vh;
+      width: 16px;
+      height: 12px;
+      border-radius: 70% 30% 70% 30%;
+      background: radial-gradient(circle at 30% 30%, #ffe8f5 0%, #ffb7d5 45%, #ff86bc 100%);
+      box-shadow: 0 0 10px rgba(255, 166, 206, 0.35);
+      opacity: 0.88;
+      animation-name: sakuraFall;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
 
-        .logo-icon {
-            font-size: 1.5rem;
-            color: var(--primary);
-            filter: drop-shadow(0 0 5px var(--primary));
-        }
+    .petal::before,
+    .petal::after {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 70% 30% 70% 30%;
+      background: inherit;
+    }
 
-        .logo-text {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.4rem;
-            font-weight: 900;
-            text-transform: uppercase;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+    .petal::before {
+      transform: rotate(55deg);
+      left: -28%;
+      top: -12%;
+      opacity: 0.85;
+    }
 
-        .system-stats {
-            display: flex;
-            gap: 10px;
-        }
+    .petal::after {
+      transform: rotate(-55deg);
+      right: -28%;
+      top: 12%;
+      opacity: 0.78;
+    }
 
-        .stat-badge {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 5px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.65rem;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-        }
+    .wrap {
+      position: relative;
+      z-index: 3;
+      width: min(1180px, calc(100% - 26px));
+      margin: 18px auto 40px;
+    }
 
-        .stat-badge span {
-            color: var(--primary);
-            font-weight: 700;
-            font-size: 0.85rem;
-        }
+    .header {
+      position: sticky;
+      top: 14px;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.13);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
 
-        .dashboard-layout {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
 
-        .section-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-        }
+    .brand-logo-frame {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.10);
+      border: 2px dashed rgba(255,255,255,0.55);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      box-shadow: inset 0 0 20px rgba(255,255,255,0.06);
+    }
 
-        .panel-card {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 15px;
-        }
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.25));
+    }
 
-        .card-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.8rem;
-            color: var(--primary);
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-transform: uppercase;
-        }
+    .brand-copy {
+      min-width: 0;
+    }
 
-        /* Compact Action Buttons */
-        .action-list {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
+    .brand-title {
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.1;
+      background: var(--grad-main);
+      background-size: 250% 250%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: rainbowShift 7s linear infinite;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-        .action-btn {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 12px;
-            border-radius: 12px;
-            color: #fff;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-        }
+    .brand-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
 
-        .action-btn i {
-            font-size: 1.2rem;
-            color: var(--primary);
-        }
+    .menu-btn {
+      width: 58px;
+      height: 58px;
+      border-radius: 20px;
+      border: 2px dashed rgba(255,255,255,0.58);
+      background: rgba(255,255,255,0.12);
+      box-shadow: var(--shadow-soft);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+      flex-shrink: 0;
+    }
 
-        .action-btn b {
-            font-size: 0.85rem;
-            display: block;
-        }
+    .menu-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      background: rgba(255,255,255,0.18);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.28);
+    }
 
-        .action-btn span {
-            font-size: 0.6rem;
-            opacity: 0.5;
-            text-transform: uppercase;
-        }
+    .menu-bars {
+      width: 24px;
+      display: grid;
+      gap: 5px;
+    }
 
-        .action-btn:hover {
-            border-color: var(--primary);
-            background: rgba(0, 242, 255, 0.08);
-            transform: translateY(-2px);
-        }
+    .menu-bars span {
+      display: block;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #ffffff, #ffe471, #7afcff, #ff9ad1);
+      box-shadow: 0 0 10px rgba(255,255,255,0.22);
+    }
 
-        .btn-loading i { animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+    .menu-panel {
+      display: none;
+      width: min(320px, 100%);
+      margin: 12px 0 0 auto;
+      padding: 12px;
+      border-radius: 24px;
+      border: 2px dashed rgba(255,255,255,0.56);
+      background: rgba(255,255,255,0.14);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+      animation: menuDrop 0.35s ease;
+    }
 
-        .btn-success { border-color: var(--success) !important; background: rgba(0, 255, 136, 0.1) !important; }
-        .btn-success i { color: var(--success) !important; }
+    .menu-panel.show { display: block; }
 
-        /* Visualization Area */
-        .monitor-panel {
-            grid-column: span 1;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+    .menu-item {
+      display: block;
+      text-decoration: none;
+      color: white;
+      font-weight: 700;
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.10);
+      border: 1px dashed rgba(255,255,255,0.36);
+      margin-bottom: 10px;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
 
-        @media (min-width: 900px) {
-            .monitor-panel { grid-column: span 2; }
-        }
+    .menu-item:last-child { margin-bottom: 0; }
+    .menu-item:hover { transform: translateX(4px); background: rgba(255,255,255,0.16); }
 
-        #chartContainer {
-            height: 150px;
-            width: 100%;
-            position: relative;
-        }
+    .intro-box {
+      margin-top: 18px;
+      padding: 22px;
+      border-radius: var(--radius-xl);
+      border: 3px dashed rgba(255,255,255,0.58);
+      background: rgba(255,255,255,0.11);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
 
-        /* Sliders */
-        .sliders-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
+    .intro-box::before {
+      content: "";
+      position: absolute;
+      inset: -40% auto auto -20%;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(255, 118, 188, 0.22), transparent 66%);
+      animation: floatGlow 8s ease-in-out infinite;
+      pointer-events: none;
+    }
 
-        .control-group {
-            background: rgba(255,255,255,0.02);
-            padding: 10px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.03);
-        }
+    .intro-box::after {
+      content: "";
+      position: absolute;
+      right: -30px;
+      bottom: -30px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(77, 221, 255, 0.18), transparent 68%);
+      animation: floatGlow 9s ease-in-out infinite reverse;
+      pointer-events: none;
+    }
 
-        .label-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            margin-bottom: 8px;
-        }
+    .intro-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1px dashed rgba(255,255,255,0.42);
+      background: rgba(255,255,255,0.08);
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff2b5;
+      position: relative;
+      z-index: 1;
+    }
 
-        .label-row span:last-child { color: var(--primary); }
+    .intro-title {
+      margin-top: 14px;
+      font-size: clamp(26px, 4vw, 42px);
+      line-height: 1.15;
+      font-weight: 900;
+      max-width: 860px;
+      background: linear-gradient(90deg, #fff8a6, #ff93d3, #8ef6ff, #b0ffbe, #ffffff);
+      background-size: 240% 240%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: rainbowShift 8s linear infinite;
+      position: relative;
+      z-index: 1;
+    }
 
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 4px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 2px;
-            outline: none;
-        }
+    .intro-text {
+      margin-top: 14px;
+      max-width: 920px;
+      font-size: 16px;
+      line-height: 1.85;
+      color: var(--muted);
+      position: relative;
+      z-index: 1;
+    }
 
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
-            background: var(--primary);
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 8px var(--primary);
-        }
+    .intro-text .m1,
+    .intro-text .m2,
+    .intro-text .m3,
+    .intro-text .m4,
+    .intro-text .m5 {
+      font-weight: 800;
+    }
 
-        footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.3);
-            margin-top: 10px;
-        }
+    .intro-text .m1 { color: #ffe071; }
+    .intro-text .m2 { color: #ff9fd2; }
+    .intro-text .m3 { color: #7cf7ff; }
+    .intro-text .m4 { color: #a8ffb3; }
+    .intro-text .m5 { color: #ffffff; }
 
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            background: var(--success);
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-            box-shadow: 0 0 5px var(--success);
-        }
+    .cards {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border-glow); border-radius: 10px; }
-    </style>
+    .card {
+      position: relative;
+      overflow: visible;
+      display: flex;
+      flex-direction: column;
+      background: rgba(255,255,255,0.12);
+      border: 3px dashed rgba(255,255,255,0.56);
+      border-radius: 30px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: transform 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-8px) scale(1.01);
+      background: rgba(255,255,255,0.16);
+      box-shadow: 0 28px 60px rgba(0,0,0,0.36);
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      top: -50px;
+      right: -30px;
+      background: radial-gradient(circle, rgba(255,255,255,0.16), transparent 68%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .card-decor {
+      position: absolute;
+      top: -46px;
+      width: 60px;
+      height: 126px;
+      pointer-events: none;
+      z-index: 3;
+      animation: hangingSwing 4.6s ease-in-out infinite;
+      filter: drop-shadow(0 12px 20px rgba(0,0,0,0.25));
+    }
+
+    .card-decor::before {
+      content: "";
+      position: absolute;
+      top: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 34px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.88), rgba(255,255,255,0.1));
+    }
+
+    .card-decor.left { left: -18px; transform-origin: top center; }
+    .card-decor.right { right: -18px; transform-origin: top center; animation-duration: 5.2s; }
+    .card-decor.envelope { top: -38px; width: 58px; height: 118px; }
+
+    .gourd-top {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 18px;
+      height: 14px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #ffe388, #ffbf45);
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.35);
+    }
+
+    .gourd-neck {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #f2b53d, #cb7a12);
+    }
+
+    .gourd-body-top {
+      position: absolute;
+      top: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ffe49c 0%, #f7c956 40%, #db8e18 100%);
+    }
+
+    .gourd-body-bottom {
+      position: absolute;
+      top: 49px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 48px;
+      height: 54px;
+      border-radius: 52% 52% 48% 48%;
+      background: radial-gradient(circle at 35% 30%, #ffedb7 0%, #ffcf5d 38%, #d67e13 100%);
+    }
+
+    .gourd-detail {
+      position: absolute;
+      top: 71px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #b92b2b;
+      font-size: 18px;
+      font-weight: 900;
+      text-shadow: 0 2px 6px rgba(255,255,255,0.3);
+    }
+
+    .envelope-knot {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ffe8a7, #e8a911 68%, #a65e06 100%);
+    }
+
+    .envelope-body {
+      position: absolute;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 44px;
+      height: 66px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #ff3c4d, #d91836 76%, #b10c23 100%);
+      border: 1px solid rgba(255,255,255,0.22);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    }
+
+    .envelope-body::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 12px;
+      transform: translateX(-50%);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffe9ab 0%, #ffd35b 58%, #d59a13 100%);
+    }
+
+    .envelope-body::after {
+      content: "福";
+      position: absolute;
+      left: 50%;
+      bottom: 10px;
+      transform: translateX(-50%);
+      color: #ffd86b;
+      font-size: 18px;
+      font-weight: 900;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    }
+
+    .card-image-wrap {
+      padding: 14px 14px 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-image {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      border-radius: 22px;
+      border: 2px dashed rgba(255,255,255,0.46);
+      display: block;
+    }
+
+    .card-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-badge {
+      width: max-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px dashed rgba(255,255,255,0.38);
+      background: rgba(255,255,255,0.08);
+      color: #fff3bf;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.2;
+      background: linear-gradient(90deg, #ffe37f, #ff93ce, #7ff4ff, #b4ffbf);
+      background-size: 240% 240%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: rainbowShift 8s linear infinite;
+    }
+
+    .card-desc {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.78;
+      flex: 1;
+    }
+
+    .card-desc .c1,
+    .card-desc .c2,
+    .card-desc .c3 { font-weight: 800; }
+    .card-desc .c1 { color: #ffe071; }
+    .card-desc .c2 { color: #87f7ff; }
+    .card-desc .c3 { color: #ff9cd3; }
+
+    .cta-btn {
+      width: 100%;
+      min-height: 54px;
+      border: none;
+      border-radius: 18px;
+      cursor: pointer;
+      color: white;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 14px 28px rgba(0,0,0,0.22);
+      transition: transform 0.25s ease, filter 0.25s ease, opacity 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      text-decoration: none;
+    }
+
+    .cta-btn:hover { transform: translateY(-2px); filter: brightness(1.04); }
+    .cta-btn.one { background: var(--grad-btn); }
+    .cta-btn.two { background: var(--grad-btn-2); }
+    .cta-btn.three { background: var(--grad-btn-3); }
+    .cta-btn.four { background: var(--grad-btn-4); }
+
+    .cta-btn .btn-content {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .cta-btn .btn-loading {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .cta-btn.loading .btn-content { display: none; }
+    .cta-btn.loading .btn-loading { display: inline-flex; }
+    .cta-btn.loading {
+      pointer-events: none;
+      opacity: 0.96;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.38);
+      border-top-color: white;
+      animation: spin 0.85s linear infinite;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 10, 23, 0.62);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 100;
+    }
+
+    .overlay.show { display: flex; }
+
+    .modal {
+      width: min(760px, 100%);
+      position: relative;
+      overflow: hidden;
+      padding: 26px;
+      border-radius: 34px;
+      border: 3px dashed rgba(255,255,255,0.62);
+      background: linear-gradient(180deg, rgba(255,255,255,0.17), rgba(255,255,255,0.10));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.38);
+      animation: modalDrop 0.82s cubic-bezier(.2,.9,.18,1);
+    }
+
+    .modal::before,
+    .modal::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .modal::before {
+      width: 220px;
+      height: 220px;
+      top: -80px;
+      right: -60px;
+      background: radial-gradient(circle, rgba(255, 110, 193, 0.24), transparent 68%);
+      animation: pulseGlow 4s ease-in-out infinite;
+    }
+
+    .modal::after {
+      width: 220px;
+      height: 220px;
+      bottom: -90px;
+      left: -70px;
+      background: radial-gradient(circle, rgba(92, 228, 255, 0.24), transparent 68%);
+      animation: pulseGlow 5s ease-in-out infinite reverse;
+    }
+
+    .modal-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .modal-title {
+      font-size: clamp(26px, 4vw, 38px);
+      font-weight: 900;
+      line-height: 1.15;
+      background: linear-gradient(90deg, #ffe678, #ff9fce, #7df7ff, #a7ffb1, #ffffff);
+      background-size: 250% 250%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: rainbowShift 8s linear infinite;
+    }
+
+    .modal-close-top {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px dashed rgba(255,255,255,0.42);
+      background: rgba(255,255,255,0.12);
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .modal-text {
+      margin-top: 14px;
+      font-size: 17px;
+      line-height: 1.95;
+      font-weight: 800;
+      position: relative;
+      z-index: 1;
+    }
+
+    .modal-text .m1 { color: #ffe070; }
+    .modal-text .m2 { color: #ff9cd4; }
+    .modal-text .m3 { color: #89f7ff; }
+    .modal-text .m4 { color: #adffb8; }
+    .modal-text .m5 { color: #ffffff; }
+
+    .modal-socials,
+    .modal-bottom {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .social-btn,
+    .close-btn {
+      min-height: 54px;
+      border-radius: 18px;
+      border: 1px dashed rgba(255,255,255,0.38);
+      text-decoration: none;
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .social-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
+
+    .facebook-btn { background: linear-gradient(135deg, #1877f2, #42a5ff); }
+    .zalo-btn { background: linear-gradient(135deg, #0068ff, #09c6ff); }
+    .close-1h { background: rgba(255,255,255,0.12); }
+    .close-now { background: linear-gradient(135deg, #ff5a88, #ffb14d); }
+
+    @keyframes modalDrop {
+      0% { opacity: 0; transform: translateY(-180px) scale(0.88) rotate(-3deg); }
+      60% { opacity: 1; transform: translateY(10px) scale(1.02) rotate(1deg); }
+      100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+    }
+
+    @keyframes rainbowShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); opacity: 0.88; }
+      50% { transform: scale(1.12); opacity: 1; }
+    }
+
+    @keyframes floatGlow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(14px); }
+    }
+
+    @keyframes menuDrop {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes sakuraFall {
+      0% {
+        transform: translate3d(0, -12vh, 0) rotate(0deg) scale(0.85);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.92;
+      }
+      50% {
+        transform: translate3d(40px, 52vh, 0) rotate(180deg) scale(1);
+      }
+      100% {
+        transform: translate3d(-35px, 112vh, 0) rotate(360deg) scale(0.82);
+        opacity: 0.08;
+      }
+    }
+
+    @keyframes hangingSwing {
+      0%, 100% { transform: rotate(2deg); }
+      25% { transform: rotate(-3deg); }
+      50% { transform: rotate(2deg); }
+      75% { transform: rotate(-2deg); }
+    }
+
+    @media (max-width: 1080px) {
+      .cards { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .wrap { width: min(100% - 16px, 100%); margin-top: 12px; }
+      .cards,
+      .modal-socials,
+      .modal-bottom { grid-template-columns: 1fr; }
+      .cards { gap: 16px; }
+      .header { padding: 12px; }
+      .brand-logo-frame { width: 50px; height: 50px; border-radius: 16px; }
+      .brand-logo { width: 34px; height: 34px; }
+      .brand-title { font-size: 16px; }
+      .brand-sub { font-size: 11px; }
+      .menu-btn { width: 52px; height: 52px; border-radius: 18px; }
+      .intro-box, .modal { padding: 18px; border-radius: 24px; }
+      .card { border-radius: 24px; }
+      .card-title { font-size: 20px; }
+      .card-decor.left { left: -6px; }
+      .card-decor.right { right: -6px; }
+      .card-decor { transform: scale(0.88); }
+    }
+
+    @media (max-width: 560px) {
+      .cards { grid-template-columns: 1fr; }
+      .brand-sub { display: none; }
+      .card-decor.left { left: 0; }
+      .card-decor.right { right: 0; }
+    }
+  </style>
 </head>
 <body>
-    <div id="particles-js"></div>
+  <div class="petals-layer" id="petalsLayer"></div>
 
-    <div class="main-wrapper">
-        <header>
-            <div class="logo-area">
-                <i class="fas fa-microchip logo-icon"></i>
-                <div class="logo-text">Magani configs</div>
-            </div>
-            <div class="system-stats">
-                <div class="stat-badge">FPS <span id="fps-counter">120</span></div>
-                <div class="stat-badge">PING <span id="ping-counter">12MS</span></div>
-                <div class="stat-badge">LOAD <span id="cpu-usage">14%</span></div>
-            </div>
-        </header>
+  <div class="overlay" id="welcomeOverlay">
+    <div class="modal">
+      <div class="modal-top">
+        <div class="modal-title">Heloword Tôi Là Hà Văn Huấn</div>
+        <button class="modal-close-top" id="closeTopBtn" type="button">×</button>
+      </div>
 
-        <div class="dashboard-layout">
-            <!-- Optimization Grid -->
-            <div class="section-grid">
-                <div class="panel-card">
-                    <div class="card-title"><i class="fas fa-bolt"></i> Core Boost</div>
-                    <div class="action-list">
-                        <button class="action-btn" onclick="runProcess(this, 'bolt', 'Power Boost', 'Boosting...')">
-                            <i class="fas fa-bolt"></i>
-                            <b>Power Boost</b>
-                            <span>CPU/GPU</span>
-                        </button>
-                        <button class="action-btn" onclick="runProcess(this, 'microchip', 'Sens Touch', 'Optimizing...')">
-                            <i class="fas fa-microchip"></i>
-                            <b>Sens Touch</b>
-                            <span>Digitizer</span>
-                        </button>
-                        <button class="action-btn" onclick="runProcess(this, 'wind', 'Zero Lag', 'Cleaning...')">
-                            <i class="fas fa-wind"></i>
-                            <b>Zero Lag</b>
-                            <span>No Drops</span>
-                        </button>
-                        <button class="action-btn" onclick="runProcess(this, 'memory', 'RAM Purge', 'Freeing...')">
-                            <i class="fas fa-memory"></i>
-                            <b>RAM Purge</b>
-                            <span>Cache Clear</span>
-                        </button>
-                    </div>
-                </div>
+      <div class="modal-text">
+        <span class="m1">Chia Sẻ Ứng Dụng Miễn Phí</span>
+        <span class="m2">Gian Lận Game </span>,
+        <span class="m3">Mượt mà khi chơi game </span>,
+        <span class="m4">Giảm giật lag</span>
+        <span class="m5">Tất Cả Đều Miễn Phí Ở bên dưới </span>
+      </div>
 
-                <div class="panel-card">
-                    <div class="card-title"><i class="fas fa-gamepad"></i> Game Tools</div>
-                    <div class="action-list">
-                        <button class="action-btn" onclick="runProcess(this, 'crosshair', 'Auto Aim', 'Calibrating...')">
-                            <i class="fas fa-microchip"></i>
-                            <b>TOUCH VIEW</b>
-                            <span>Green TOUCH</span>
-                        </button>
-                        <button class="action-btn" onclick="runProcess(this, 'eye', 'Wall View', 'Scanning...')">
-                            <i class="fas fa-microchip"></i>
-                            <b> View</b>
-                            <span>Texture</span>
-                        </button>
-                        <button class="action-btn" onclick="runProcess(this, 'gauge-high', 'Speed Hack', 'Injecting...')">
-                            <i class="fas fa-microchip"></i>
-                            <b>Speed Up</b>
-                            <span>Movement</span>
-                        </button>
-                        <button class="action-btn" onclick="runProcess(this, 'shield-virus', 'Anti-Ban', 'Securing...')">
-                            <i class="fas fa-microchip"></i>
-                            <b>SPEED SUS</b>
-                            <span>Sensi - system</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+      <div class="modal-socials">
+        <a class="social-btn facebook-btn" href="https://www.facebook.com/share/1B527FwVu7/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12.07C22 6.51 17.52 2 12 2S2 6.51 2 12.07c0 5.03 3.66 9.19 8.44 9.93v-7.02H7.9v-2.91h2.54V9.85c0-2.52 1.49-3.91 3.78-3.91 1.1 0 2.26.2 2.26.2v2.47h-1.27c-1.25 0-1.64.78-1.64 1.58v1.9h2.79l-.45 2.91h-2.34V22c4.78-.74 8.44-4.9 8.44-9.93z"/></svg>
+          Facebook
+        </a>
+        <a class="social-btn zalo-btn" href="https://zalo.me/g/0qevnrkjbbhnraioxpos" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 4h15A2.5 2.5 0 0 1 22 6.5v7A2.5 2.5 0 0 1 19.5 16H10l-4.5 4v-4H4.5A2.5 2.5 0 0 1 2 13.5v-7A2.5 2.5 0 0 1 4.5 4zm2.3 3.2V9h3.4l-3.7 4.6V15h6.6v-1.8H9.6L13.2 8.6V7.2H6.8zm7.4 0V15H16V7.2h-1.8zm3.2 0V15h1.8V7.2h-1.8z"/></svg>
+          Nhóm Zalo
+        </a>
+      </div>
 
-            <!-- Monitoring Grid -->
-            <div class="section-grid">
-                <div class="panel-card monitor-panel">
-                    <div class="card-title"><i class="fas fa-chart-line"></i> Performance Real-time</div>
-                    <div id="chartContainer">
-                        <canvas id="liveChart"></canvas>
-                    </div>
-                </div>
+      <div class="modal-bottom">
+        <button class="close-btn close-1h" id="close1HourBtn" type="button">Đóng 1 giờ</button>
+        <button class="close-btn close-now" id="closeNowBtn" type="button">Đóng</button>
+      </div>
+    </div>
+  </div>
 
-                <div class="panel-card">
-                    <div class="card-title"><i class="fas fa-sliders"></i> Fine Tuning</div>
-                    <div class="sliders-grid">
-                        <div class="control-group">
-                            <div class="label-row"><span>Sensi</span><span id="v-sensi">85%</span></div>
-                            <input type="range" value="85" oninput="updateRange('v-sensi', this.value)">
-                        </div>
-                        <div class="control-group">
-                            <div class="label-row"><span>Scale</span><span id="v-res">100%</span></div>
-                            <input type="range" value="100" oninput="updateRange('v-res', this.value)">
-                        </div>
-                        <div class="control-group">
-                            <div class="label-row"><span>AA</span><span id="v-aa">4x</span></div>
-                            <input type="range" min="0" max="4" step="1" value="2" oninput="updateRangeAA(this.value)">
-                        </div>
-                        <div class="control-group">
-                            <div class="label-row"><span>FOV</span><span id="v-fov">90</span></div>
-                            <input type="range" min="60" max="120" value="90" oninput="updateRange('v-fov', this.value)">
-                        </div>
-                    </div>
-                </div>
-            </div>
+  <div class="wrap">
+    <header class="header">
+      <div class="brand">
+        <div class="brand-logo-frame">
+          <img
+            class="brand-logo"
+            src="https://sf-static.upanhlaylink.com/img/image_202603122a4d724feb78745875f510b3aff53201.jpg"
+            alt="Logo PNG"
+          />
         </div>
+        <div class="brand-copy">
+          <div class="brand-title">Hà Văn Huấn</div>
+          <div class="brand-sub"></div>
+        </div>
+      </div>
 
-        <footer>
-            <div><span class="status-dot"></span> ENGINE ACTIVE: v4.2.0</div>
-            <div>MAGANI CONFIGS &copy; 2026</div>
-        </footer>
+      <button class="menu-btn" id="menuBtn" aria-label="Mở menu" type="button">
+        <div class="menu-bars">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
+    </header>
+
+    <div class="menu-panel" id="menuPanel">
+      <a class="menu-item" href="https://www.facebook.com/share/1B527FwVu7/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer">Facebook</a>
+      <a class="menu-item" href="https://zalo.me/g/0qevnrkjbbhnraioxpos" target="_blank" rel="noopener noreferrer">Nhóm Zalo</a>
+      <a class="menu-item" href="#apps">Tất Cả App</a>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-    <script>
-        particlesJS('particles-js', {
-            "particles": {
-                "number": { "value": 60, "density": { "enable": true, "value_area": 800 } },
-                "color": { "value": "#00f2ff" },
-                "opacity": { "value": 0.2, "random": true },
-                "size": { "value": 2, "random": true },
-                "line_linked": { "enable": true, "distance": 150, "color": "#00f2ff", "opacity": 0.1, "width": 1 },
-                "move": { "enable": true, "speed": 1.5 }
-            }
-        });
+    <section class="intro-box">
+      <div class="intro-label">ADMIN GIỚI THIỆU • BẢN FREE NỔI BẬT</div>
+      <div class="intro-title">Dưới Đây Là Các Ứng Dụng Hiện Có , Có thể sử dụng trong việc can thiệp bất hợp pháp cho game Free Fire Cheat New Antiband </div>
+      <div class="intro-text">
+        <span class="m1">Admin hỗ trợ nhanh</span>,
+        <span class="m2">chia sẻ bản free hữu ích</span>,
+        <span class="m3">Cheat Game Free Fire</span>,
+        <span class="m4">Đào Tạo Học Viên Hack - Website - App</span>
+        <span class="m5">Hãy Kết Nối Với Tôi Qua Zalo : 0379435045</span>
+      </div>
+    </section>
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playBeep(f, t, d, v = 0.05) {
-            const osc = audioCtx.createOscillator();
-            const g = audioCtx.createGain();
-            osc.type = t;
-            osc.frequency.setValueAtTime(f, audioCtx.currentTime);
-            g.gain.setValueAtTime(v, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d);
-            osc.connect(g);
-            g.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + d);
-        }
+    <section class="cards" id="apps">
+      <article class="card">
+        <div class="card-decor left gourd">
+          <div class="gourd-top"></div>
+          <div class="gourd-neck"></div>
+          <div class="gourd-body-top"></div>
+          <div class="gourd-body-bottom"></div>
+          <div class="gourd-detail">福</div>
+        </div>
+        <div class="card-decor right envelope">
+          <div class="envelope-knot"></div>
+          <div class="envelope-body"></div>
+        </div>
+        <div class="card-image-wrap">
+          <img class="card-image" src="https://sf-static.upanhlaylink.com/img/image_2026031278f66ae4599fb20a1e7ffa8b7fdd1ae4.jpg" alt="Ưu đãi 1" loading="lazy" />
+        </div>
+        <div class="card-body">
+          <div class="card-badge">KEY LOGIN AIMLOCK SUPER</div>
+          <div class="card-title">Phiên Bản Miễn Phí 100%</div>
+          <div class="card-desc">
+            Update<span class="c1">Mỗi Ngày</span>, Sử dụng được cho cả android & Iphone <span class="c2">ấn vào nút bên dưới</span> để Để Lấy key <span class="c3">🚀</span>.
+          </div>
+          <button class="cta-btn one redirect-btn" data-link="https://link4m.com/0FQhuhUe" type="button">
+            <span class="btn-content">Get Key Free</span>
+            <span class="btn-loading"><span class="spinner"></span>wait...</span>
+          </button>
+        </div>
+      </article>
 
-        function runProcess(btn, icon, title, status) {
-            if (btn.classList.contains('btn-loading') || btn.classList.contains('btn-success')) return;
-            playBeep(200, 'square', 0.1);
-            btn.classList.add('btn-loading');
-            const originalIcon = btn.querySelector('i').className;
-            btn.querySelector('i').className = 'fas fa-spinner';
-            
-            setTimeout(() => {
-                btn.classList.remove('btn-loading');
-                btn.classList.add('btn-success');
-                btn.querySelector('i').className = 'fas fa-check';
-                playBeep(500, 'sine', 0.3);
-                setTimeout(() => {
-                    btn.classList.remove('btn-success');
-                    btn.querySelector('i').className = originalIcon;
-                }, 2000);
-            }, 1500);
-        }
+      <article class="card">
+        <div class="card-decor left envelope">
+          <div class="envelope-knot"></div>
+          <div class="envelope-body"></div>
+        </div>
+        <div class="card-decor right gourd">
+          <div class="gourd-top"></div>
+          <div class="gourd-neck"></div>
+          <div class="gourd-body-top"></div>
+          <div class="gourd-body-bottom"></div>
+          <div class="gourd-detail">禄</div>
+        </div>
+        <div class="card-image-wrap">
+          <img class="card-image" src="https://sf-static.upanhlaylink.com/img/image_20260312054cabe60eef3c6b7dae9e43a3c254df.jpg" alt="Ưu đãi 2" loading="lazy" />
+        </div>
+        <div class="card-body">
+          <div class="card-badge">APP BOOST SUPER</div>
+          <div class="card-title">Miễn phí hoàn toàn 100%</div>
+          <div class="card-desc">
+            Sử Dụng Cho Thiết Bị <span class="c1">Android & Iphone</span>, Có nhiều chức năng giúp bạn tăng tốc game , Mượt hơn , và kéo tâm full đỏ một cách dễ dàng nhất <span class="c2">Tải Ngay</span>, <span class="c3">Hãy ấn vào nút bên dưới</span>.
+          </div>
+          <button class="cta-btn two redirect-btn" data-link="https://link4m.com/htSsJo" type="button">
+            <span class="btn-content">Tải Ứng Dụng</span>
+            <span class="btn-loading"><span class="spinner"></span>Wait...</span>
+          </button>
+        </div>
+      </article>
 
-        function updateRange(id, val) { document.getElementById(id).innerText = val + (id.includes('fov') ? '' : '%'); }
-        function updateRangeAA(val) { document.getElementById('v-aa').innerText = ['OFF', '2x', '4x', '8x', '16x'][val]; }
+      <article class="card">
+        <div class="card-decor left gourd">
+          <div class="gourd-top"></div>
+          <div class="gourd-neck"></div>
+          <div class="gourd-body-top"></div>
+          <div class="gourd-body-bottom"></div>
+          <div class="gourd-detail">寿</div>
+        </div>
+        <div class="card-decor right envelope">
+          <div class="envelope-knot"></div>
+          <div class="envelope-body"></div>
+        </div>
+        <div class="card-image-wrap">
+          <img class="card-image" src="https://sf-static.upanhlaylink.com/img/image_2026031285943fc95823af13f6835a59c3dae68d.jpg" alt="Ưu đãi 3" loading="lazy" />
+        </div>
+        <div class="card-body">
+          <div class="card-badge">App Aimlock Super</div>
+          <div class="card-title">Phiên bản miễn phí 100%</div>
+          <div class="card-desc">
+            Cài được Trên Tất cả thiết bị <span class="c1">An toàn tuyệt đối</span>, Đã Update<span class="c2">Giúp Cheat Game Kéo Tâm Full đỏ đơn giản </span> Hãy tải xuống bằng cách<span class="c3">Ấn Vào Nút Bên Dưới </span>.
+          </div>
+          <button class="cta-btn three redirect-btn" data-link="https://link4m.com/sX2vw5" type="button">
+            <span class="btn-content">Tải Ứng Dụng </span>
+            <span class="btn-loading"><span class="spinner"></span>Wait...</span>
+          </button>
+        </div>
+      </article>
+    </section>
+  </div>
 
-        const canvas = document.getElementById('liveChart');
-        const ctx = canvas.getContext('2d');
-        let chartData = Array(30).fill(30);
+  <script>
+    const menuBtn = document.getElementById('menuBtn');
+    const menuPanel = document.getElementById('menuPanel');
+    const overlay = document.getElementById('welcomeOverlay');
+    const closeTopBtn = document.getElementById('closeTopBtn');
+    const closeNowBtn = document.getElementById('closeNowBtn');
+    const close1HourBtn = document.getElementById('close1HourBtn');
+    const redirectButtons = document.querySelectorAll('.redirect-btn');
+    const petalsLayer = document.getElementById('petalsLayer');
 
-        function drawChart() {
-            const w = canvas.width = canvas.parentElement.offsetWidth;
-            const h = canvas.height = canvas.parentElement.offsetHeight;
-            ctx.clearRect(0, 0, w, h);
-            chartData.push(Math.max(10, Math.min(90, chartData[chartData.length-1] + (Math.random()-0.5)*15)));
-            chartData.shift();
-            ctx.beginPath();
-            ctx.strokeStyle = '#00f2ff';
-            ctx.lineWidth = 2;
-            const step = w / (chartData.length - 1);
-            chartData.forEach((v, i) => {
-                const x = i * step;
-                const y = h - (v/100 * h);
-                if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-            });
-            ctx.stroke();
-            ctx.lineTo(w, h); ctx.lineTo(0, h);
-            const g = ctx.createLinearGradient(0, 0, 0, h);
-            g.addColorStop(0, 'rgba(0, 242, 255, 0.1)'); g.addColorStop(1, 'transparent');
-            ctx.fillStyle = g; ctx.fill();
-            document.getElementById('fps-counter').innerText = Math.round(110 + Math.random()*20);
-            document.getElementById('ping-counter').innerText = Math.round(10 + Math.random()*5) + 'MS';
-            document.getElementById('cpu-usage').innerText = Math.round(chartData[chartData.length-1]) + '%';
-            requestAnimationFrame(drawChart);
-        }
-        window.onload = drawChart;
-        document.addEventListener('mousedown', () => audioCtx.state === 'suspended' && audioCtx.resume());
-    </script>
+    function toggleMenu(force) {
+      const shouldShow = typeof force === 'boolean'
+        ? force
+        : !menuPanel.classList.contains('show');
+
+      menuPanel.classList.toggle('show', shouldShow);
+    }
+
+    menuBtn.addEventListener('click', function () {
+      toggleMenu();
+    });
+
+    document.addEventListener('click', function (e) {
+      const insideMenu = menuPanel.contains(e.target);
+      const insideBtn = menuBtn.contains(e.target);
+
+      if (!insideMenu && !insideBtn) {
+        toggleMenu(false);
+      }
+    });
+
+    function closeModal() {
+      overlay.classList.remove('show');
+    }
+
+    function showModalIfAllowed() {
+      const hiddenUntil = Number(localStorage.getItem('hideModalUntil') || '0');
+
+      if (Date.now() < hiddenUntil) {
+        overlay.classList.remove('show');
+        return;
+      }
+
+      overlay.classList.add('show');
+    }
+
+    closeTopBtn.addEventListener('click', closeModal);
+    closeNowBtn.addEventListener('click', closeModal);
+
+    close1HourBtn.addEventListener('click', function () {
+      const oneHour = 60 * 60 * 1000;
+      localStorage.setItem('hideModalUntil', String(Date.now() + oneHour));
+      closeModal();
+    });
+
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeModal();
+        toggleMenu(false);
+      }
+    });
+
+    function redirectWithLoading(button, link) {
+      if (!link) return;
+
+      if (button.classList.contains('loading')) return;
+
+      button.classList.add('loading');
+      button.disabled = true;
+
+      setTimeout(function () {
+        window.location.href = link;
+      }, 1400);
+    }
+
+    redirectButtons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        const targetLink = button.getAttribute('data-link');
+        redirectWithLoading(button, targetLink);
+      });
+    });
+
+    function createPetals() {
+      const petalCount = 24;
+      const fragment = document.createDocumentFragment();
+
+      for (let i = 0; i < petalCount; i++) {
+        const petal = document.createElement('span');
+        petal.className = 'petal';
+        petal.style.left = Math.random() * 100 + 'vw';
+        petal.style.animationDuration = 8 + Math.random() * 8 + 's';
+        petal.style.animationDelay = Math.random() * -16 + 's';
+        petal.style.opacity = 0.5 + Math.random() * 0.45;
+        petal.style.transform = 'scale(' + (0.7 + Math.random() * 0.8) + ')';
+        fragment.appendChild(petal);
+      }
+
+      petalsLayer.appendChild(fragment);
+    }
+
+    createPetals();
+    showModalIfAllowed();
+  </script>
 </body>
 </html>
