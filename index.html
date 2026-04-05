@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,42 +8,238 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+    import { getDatabase, ref, onValue, increment, update } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAZVjQyyl7UQ9F2lN6fUi72ugSiMglfnt8",
+  authDomain: "appsuper-6b302.firebaseapp.com",
+  databaseURL: "https://appsuper-6b302-default-rtdb.firebaseio.com",
+  projectId: "appsuper-6b302",
+  storageBucket: "appsuper-6b302.firebasestorage.app",
+  messagingSenderId: "403345415006",
+  appId: "1:403345415006:web:f69b2b5e97ef0766cc0dcf"
+    };
+
+    let db = null;
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getDatabase(app);
+      window._fbDB = db;
+      window._fbRef = ref;
+      window._fbUpdate = update;
+      window._fbIncrement = increment;
+      window._fbOnValue = onValue;
+      loadAppsFromFirebase();
+      loadStatsFromFirebase();
+    } catch(e) {
+      console.warn('Firebase init failed, using static data:', e);
+      loadStaticApps();
+    }
+
+    function loadAppsFromFirebase() {
+      const appsRef = ref(db, 'apps');
+      onValue(appsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          renderApps(Object.entries(data).map(([id, v]) => ({id, ...v})));
+        } else {
+          loadStaticApps();
+        }
+      }, () => loadStaticApps());
+    }
+
+    function loadStatsFromFirebase() {
+      const statsRef = ref(db, 'stats');
+      onValue(statsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          document.getElementById('stat-total-apps').textContent = data.totalApps || '8+';
+          document.getElementById('stat-downloads').textContent = data.totalDownloads ? (data.totalDownloads > 1000 ? (data.totalDownloads/1000).toFixed(1)+'K' : data.totalDownloads) : '50K+';
+          document.getElementById('stat-users').textContent = data.totalUsers ? (data.totalUsers > 1000 ? (data.totalUsers/1000).toFixed(1)+'K' : data.totalUsers) : '10K+';
+          document.getElementById('stat-online').textContent = data.onlineNow || '24/7';
+        }
+      });
+    }
+
+    window.renderApps = renderApps;
+    window.loadStaticApps = loadStaticApps;
+    window.trackDownload = trackDownload;
+
+    function renderApps(apps) {
+      const container = document.getElementById('cards-container');
+      if (!container) return;
+      if (!apps || apps.length === 0) { loadStaticApps(); return; }
+      container.innerHTML = '';
+      const colors = ['v1','v2','v3'];
+      apps.forEach((app, i) => {
+        if (app.hidden) return;
+        const c = colors[i % colors.length];
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.style.animationDelay = (0.1 + i * 0.1) + 's';
+        card.innerHTML = `
+          <div class="card-tline"></div>
+          <div class="card-img-w">
+            <img class="card-img" src="${app.image || ''}" alt="${app.name || ''}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x250/0a0a1a/dc2626?text=APP'" />
+            <div class="card-img-ov"></div>
+            <div class="card-badge">${app.badge || app.name || ''}</div>
+            ${app.downloadCount ? `<div class="card-dl-count"><i class="fa-solid fa-download"></i> ${app.downloadCount > 1000 ? (app.downloadCount/1000).toFixed(1)+'K' : app.downloadCount}</div>` : ''}
+          </div>
+          <div class="card-body">
+            <h2 class="card-title">${app.name || ''}</h2>
+            <div class="ctags">
+              <span class="ctag"><i class="fa-brands fa-android" style="margin-right:4px"></i>Android</span>
+              <span class="ctag"><i class="fa-brands fa-apple" style="margin-right:4px"></i>iOS</span>
+              <span class="ctag">${app.tag || 'Free 100%'}</span>
+            </div>
+            <p class="card-desc">${app.desc || ''}</p>
+            <button class="btnd ${c} rbtn" data-link="${app.link || '#'}" data-id="${app.id || ''}">
+              <span class="bcont"><i class="fa-solid fa-download"></i> Tải Ứng Dụng</span>
+              <span class="bloading"><span class="spin"></span> Đang xử lý…</span>
+            </button>
+          </div>`;
+        container.appendChild(card);
+      });
+      attachDownloadListeners();
+      updateChart(apps);
+    }
+
+    function loadStaticApps() {
+      const staticApps = [
+        {id:'app1', name:'App Boost Super', badge:'Boost Super', image:'https://sf-static.upanhlaylink.com/img/image_20260312054cabe60eef3c6b7dae9e43a3c254df.jpg', desc:'Sử dụng cho thiết bị <span class="c1">Android & iPhone</span>. Tăng tốc game, mượt hơn và <span class="c2">kéo tâm full</span> dễ dàng. <span class="c3">Tải ngay miễn phí!</span>', link:'https://link4m.com/zUoIho', tag:'Free 100%', downloadCount:12500},
+        {id:'app2', name:'SUPER V5.0', badge:'APP SUPER V5', image:'https://sf-static.upanhlaylink.com/img/image_202603255ff843d78e24b2e7c2818eb5bcafbdf7.jpg', desc:'Sử dụng cho thiết bị <span class="c1">Android & iPhone</span>. Tăng tốc game, mượt hơn và <span class="c2">kéo tâm full</span> dễ dàng. <span class="c3">Tải ngay miễn phí!</span>', link:'https://www.mediafire.com/file/lzzbr2250i2rssv/APP+SUPER+PRO+V5.zip/file', tag:'Free 100%', downloadCount:9800},
+        {id:'app3', name:'V4.5', badge:'AIMLOCK SUPER V4.5', image:'https://sf-static.upanhlaylink.com/img/image_20260321906732bbc34b5046cc3148399bc354bc.jpg', desc:'Sử dụng cho thiết bị <span class="c1">Android & iPhone</span>. Tăng tốc game, mượt hơn và <span class="c2">kéo tâm full</span> dễ dàng. <span class="c3">Tải ngay miễn phí!</span>', link:'https://www.mediafire.com/file/0vs1k8jjw9g4w6n/AIMLOCK+SUPER+V4.5.zip/file', tag:'Free 100%', downloadCount:8300},
+        {id:'app4', name:'Aimlock Super V2', badge:'Aimlock V2', image:'https://sf-static.upanhlaylink.com/img/image_2026031482830f9eb92e98cc56cb648d2c43592c.jpg', desc:'Phiên bản <span class="c1">V2 mới nhất</span>. Update <span class="c2">Anti-Band</span>, tăng tốc game, kéo tâm full đỏ. <span class="c3">Tải ngay miễn phí!</span>', link:'https://www.mediafire.com/file/w4s5m6ywnixi7y2/AIMLOCK+SUPER+V2+--.zip/file', tag:'Mới Nhất', downloadCount:15200},
+        {id:'app5', name:'Aimlock Super V3', badge:'Aimlock v3', image:'https://sf-static.upanhlaylink.com/img/image_20260315b6e784bf9855f81eea3f79c0a269ce16.jpg', desc:'Phiên bản <span class="c1">V3 mới nhất</span>. Update <span class="c2">Anti-Band</span>, tăng tốc game, kéo tâm full đỏ. <span class="c3">Tải ngay miễn phí!</span>', link:'https://www.mediafire.com/file/maxrjnpfctgmcav/AIMLOCK_SUPER_V3.zip/file', tag:'Mới Nhất', downloadCount:11600},
+        {id:'app6', name:'APP SUPER VIP', badge:'APP SUPER', image:'https://sf-static.upanhlaylink.com/img/image_202603176806562eb98ebadeb577a084a58eeb61.jpg', desc:'Phiên bản <span class="c1"> mới nhất</span>. Update <span class="c2">Anti-Band</span>, tăng tốc game, kéo tâm full đỏ. <span class="c3">Tải ngay miễn phí!</span>', link:'https://www.mediafire.com/file/e716v2xfu5ymo3e/APP+SUPER+VIP.zip/file', tag:'Mới Nhất', downloadCount:7400},
+        {id:'app7', name:'AIMLOCK BOOST VIP', badge:'AIMLOCK BOOST', image:'https://sf-static.upanhlaylink.com/img/image_20260315cb294ab60c2d5b574190c461f0ec6d8c.jpg', desc:'Phiên bản <span class="c1">VIP mới nhất</span>. Update <span class="c2">Anti-Band</span>, tăng tốc game, kéo tâm full đỏ. <span class="c3">Tải ngay miễn phí!</span>', link:'https://www.mediafire.com/file/5l9xce1bbpog0ty/AIMLOCK_BOOST_.zip/file', tag:'Mới Nhất', downloadCount:6100},
+      ];
+      renderApps(staticApps);
+    }
+
+    function trackDownload(appId) {
+      if (!db || !appId) return;
+      try {
+        const appRef = ref(db, `apps/${appId}`);
+        update(appRef, { downloadCount: increment(1) });
+        const statsRef = ref(db, 'stats');
+        update(statsRef, { totalDownloads: increment(1) });
+      } catch(e) {}
+    }
+
+    function attachDownloadListeners() {
+      document.querySelectorAll('.rbtn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const link = this.dataset.link;
+          const id = this.dataset.id;
+          if (!link || link === '#') return;
+          this.classList.add('loading');
+          if (id) trackDownload(id);
+          setTimeout(() => {
+            window.open(link, '_blank', 'noopener');
+            this.classList.remove('loading');
+          }, 900);
+        });
+      });
+    }
+
+    function updateChart(apps) {
+      const ctx = document.getElementById('downloadChart');
+      if (!ctx) return;
+      const sorted = [...apps].sort((a,b) => (b.downloadCount||0) - (a.downloadCount||0)).slice(0, 7);
+      if (window._downloadChart) window._downloadChart.destroy();
+      window._downloadChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: sorted.map(a => a.name || a.badge || 'App'),
+          datasets: [{
+            label: 'Lượt Tải',
+            data: sorted.map(a => a.downloadCount || 0),
+            backgroundColor: sorted.map((_,i) => `rgba(220,38,38,${0.9 - i*0.08})`),
+            borderColor: sorted.map(() => '#ef4444'),
+            borderWidth: 2,
+            borderRadius: 10,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(10,10,20,0.95)',
+              borderColor: 'rgba(220,38,38,0.5)',
+              borderWidth: 1,
+              titleColor: '#fca5a5',
+              bodyColor: '#fca5a5',
+              callbacks: {
+                label: ctx => ` ${ctx.parsed.y.toLocaleString()} lượt tải`
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#fca5a5', font: { size: 11, weight: '600' }, maxRotation: 35 },
+              grid: { color: 'rgba(220,38,38,0.08)' },
+              border: { color: 'rgba(220,38,38,0.2)' }
+            },
+            y: {
+              ticks: { color: '#fca5a5', font: { size: 11 }, callback: v => v >= 1000 ? (v/1000).toFixed(1)+'K' : v },
+              grid: { color: 'rgba(220,38,38,0.08)' },
+              border: { color: 'rgba(220,38,38,0.2)' }
+            }
+          },
+          animation: { duration: 1400, easing: 'easeOutQuart' }
+        }
+      });
+    }
+  </script>
 
   <style>
-    /* ━━━━━━ RESET ━━━━━━ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --blue:     #2563eb;
-      --blue2:    #3b82f6;
-      --blue3:    #60a5fa;
-      --blue4:    #93c5fd;
-      --indigo:   #4f46e5;
-      --cyan:     #06b6d4;
-      --cyan2:    #22d3ee;
-      --violet:   #7c3aed;
-      --dark:     #040b1a;
-      --dark2:    #07112b;
-      --dark3:    #0a1635;
-      --card:     rgba(7,17,43,0.78);
-      --border:   rgba(59,130,246,0.2);
-      --border2:  rgba(59,130,246,0.45);
-      --border3:  rgba(99,179,237,0.6);
-      --text:     #e8f0fe;
-      --muted:    rgba(200,220,255,0.62);
-      --muted2:   rgba(200,220,255,0.38);
-      --glow:     rgba(37,99,235,0.55);
-      --glow2:    rgba(6,182,212,0.4);
-      --grad:     linear-gradient(135deg,#2563eb,#4f46e5,#06b6d4);
-      --grad2:    linear-gradient(135deg,#0891b2,#2563eb);
-      --grad3:    linear-gradient(135deg,#7c3aed,#2563eb);
+      --red:      #dc2626;
+      --red2:     #ef4444;
+      --red3:     #f87171;
+      --red4:     #fca5a5;
+      --red5:     #fee2e2;
+      --dark:     #060409;
+      --dark2:    #0d0610;
+      --dark3:    #130818;
+      --card:     rgba(20,5,15,0.82);
+      --border:   rgba(220,38,38,0.18);
+      --border2:  rgba(220,38,38,0.42);
+      --border3:  rgba(248,113,113,0.55);
+      --text:     #fef2f2;
+      --muted:    rgba(255,220,220,0.65);
+      --muted2:   rgba(255,200,200,0.38);
+      --glow:     rgba(220,38,38,0.55);
+      --grad:     linear-gradient(135deg,#dc2626,#991b1b,#ef4444);
+      --grad2:    linear-gradient(135deg,#7f1d1d,#dc2626);
+      --grad3:    linear-gradient(135deg,#b91c1c,#ef4444,#f87171);
       --r:        14px;
       --r-lg:     22px;
       --r-xl:     28px;
     }
 
+    [data-theme="light"] {
+      --dark:     #fff5f5;
+      --dark2:    #fef2f2;
+      --dark3:    #ffe4e6;
+      --card:     rgba(255,245,245,0.90);
+      --border:   rgba(220,38,38,0.22);
+      --border2:  rgba(220,38,38,0.45);
+      --text:     #1a0505;
+      --muted:    rgba(80,10,10,0.72);
+      --muted2:   rgba(80,10,10,0.42);
+    }
+
     html { scroll-behavior: smooth; }
-    ::selection { background: rgba(59,130,246,.35); color: #fff; }
+    ::selection { background: rgba(220,38,38,.35); color: #fff; }
 
     body {
       min-height: 100vh;
@@ -51,6 +247,7 @@
       color: var(--text);
       background: var(--dark);
       overflow-x: hidden;
+      transition: background .4s, color .4s;
     }
 
     /* ━━━━━━ AURORA BG ━━━━━━ */
@@ -60,322 +257,317 @@
     }
     .ab {
       position: absolute; border-radius: 50%;
-      filter: blur(90px); opacity: 0;
+      filter: blur(100px); opacity: 0;
       animation: auroraIn 1.2s forwards, auroraFloat var(--dur,14s) ease-in-out var(--delay,0s) infinite;
     }
-    .ab.a { width:700px;height:700px;top:-200px;left:-150px;background:radial-gradient(circle,#1e3a8a,#4f46e5);--dur:16s;--delay:0s; }
-    .ab.b { width:500px;height:500px;top:10%;right:-120px;background:radial-gradient(circle,#0369a1,#2563eb);--dur:18s;--delay:-5s; }
-    .ab.c { width:550px;height:550px;bottom:-200px;left:15%;background:radial-gradient(circle,#4f46e5,#0891b2);--dur:20s;--delay:-9s; }
-    .ab.d { width:320px;height:320px;bottom:10%;right:5%;background:radial-gradient(circle,#6d28d9,#1d4ed8);--dur:13s;--delay:-3s; }
-    @keyframes auroraIn { to { opacity:.26; } }
+    .ab.a { width:750px;height:750px;top:-200px;left:-180px;background:radial-gradient(circle,#7f1d1d,#b91c1c,#450a0a);--dur:16s;--delay:0s; }
+    .ab.b { width:550px;height:550px;top:8%;right:-140px;background:radial-gradient(circle,#991b1b,#dc2626);--dur:18s;--delay:-5s; }
+    .ab.c { width:600px;height:600px;bottom:-220px;left:12%;background:radial-gradient(circle,#b91c1c,#7f1d1d);--dur:20s;--delay:-9s; }
+    .ab.d { width:350px;height:350px;bottom:12%;right:6%;background:radial-gradient(circle,#dc2626,#450a0a);--dur:13s;--delay:-3s; }
+    @keyframes auroraIn { to { opacity:.22; } }
     @keyframes auroraFloat {
       0%,100% { transform:translate(0,0) scale(1); }
-      33%  { transform:translate(35px,-25px) scale(1.07); }
-      66%  { transform:translate(-25px,18px) scale(.94); }
+      33%  { transform:translate(40px,-28px) scale(1.08); }
+      66%  { transform:translate(-28px,20px) scale(.93); }
     }
 
     /* ━━━━━━ CANVAS ━━━━━━ */
     #pcvs { position:fixed;inset:0;z-index:1;pointer-events:none; }
 
+    /* ━━━━━━ WAVE CANVAS ━━━━━━ */
+    #waveCvs { position:fixed;bottom:0;left:0;right:0;z-index:1;pointer-events:none; }
+
     /* ━━━━━━ SCAN LINES ━━━━━━ */
     .scan {
       position:fixed;inset:0;z-index:2;pointer-events:none;
-      background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.035) 3px,rgba(0,0,0,.035) 4px);
+      background: repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.025) 3px,rgba(0,0,0,.025) 4px);
     }
 
     /* ━━━━━━ FLOATING RINGS ━━━━━━ */
     .fring {
-      position:fixed;border-radius:50%;border:1px solid rgba(59,130,246,.12);
+      position:fixed;border-radius:50%;border:1px solid rgba(220,38,38,.1);
       pointer-events:none;z-index:0;
     }
-    .fring.r1{width:600px;height:600px;top:-150px;left:-250px;animation:ringRotate 30s linear infinite;}
-    .fring.r2{width:400px;height:400px;top:25%;right:-130px;animation:ringRotate 22s linear infinite reverse;}
-    .fring.r3{width:300px;height:300px;bottom:5%;left:2%;animation:ringRotate 26s linear infinite;}
+    .fring.r1{width:700px;height:700px;top:-180px;left:-280px;animation:ringRotate 35s linear infinite;}
+    .fring.r2{width:450px;height:450px;top:22%;right:-150px;animation:ringRotate 25s linear infinite reverse;}
+    .fring.r3{width:320px;height:320px;bottom:4%;left:1%;animation:ringRotate 28s linear infinite;}
+    .fring.r4{width:250px;height:250px;top:45%;left:40%;animation:ringRotate 20s linear infinite;}
     @keyframes ringRotate { to { transform:rotate(360deg); } }
 
     /* ━━━━━━ WRAP ━━━━━━ */
     .wrap {
       position:relative;z-index:3;
-      width:min(1180px,calc(100% - 28px));
+      width:min(1200px,calc(100% - 28px));
       margin:0 auto;
-      padding:20px 0 80px;
+      padding:20px 0 100px;
     }
 
-    /* ━━━━━━━━━━━━━━━━━━━━
-         WELCOME MODAL
-    ━━━━━━━━━━━━━━━━━━━━━━ */
-    #wOverlay {
-      position:fixed;inset:0;
-      background:rgba(2,6,20,.88);
-      backdrop-filter:blur(10px);
-      -webkit-backdrop-filter:blur(10px);
-      display:none;
-      align-items:flex-start;
-      justify-content:center;
-      padding:40px 20px 20px;
-      z-index:1000;
+    /* ━━━━━━ SIDE DRAWER ━━━━━━ */
+    #drawerOverlay {
+      position:fixed;inset:0;background:rgba(0,0,0,.6);
+      backdrop-filter:blur(6px);z-index:500;
+      opacity:0;pointer-events:none;transition:opacity .35s;
+    }
+    #drawerOverlay.open { opacity:1;pointer-events:all; }
+
+    #sideDrawer {
+      position:fixed;top:0;left:0;bottom:0;
+      width:290px;max-width:88vw;
+      background:linear-gradient(160deg,#0d0610,#130818,#1a0a20);
+      border-right:1.5px solid var(--border2);
+      z-index:501;
+      transform:translateX(-100%);
+      transition:transform .4s cubic-bezier(.16,1,.3,1);
       overflow-y:auto;
+      box-shadow:8px 0 60px rgba(220,38,38,.18);
     }
-    #wOverlay.show { display:flex; }
+    #sideDrawer.open { transform:translateX(0); }
 
-    /* Modal slide from top */
-    .modal {
-      width:min(680px,100%);
-      background:var(--dark2);
-      border:1.5px solid var(--border2);
-      border-radius:var(--r-xl);
-      padding:38px;
+    .drawer-header {
+      padding:28px 24px 20px;
+      border-bottom:1px solid var(--border);
       position:relative;
-      overflow:hidden;
-      box-shadow:0 0 100px rgba(37,99,235,.28),0 40px 120px rgba(0,0,0,.7);
-      /* Animation: slide from top */
-      animation:modalSlideDown .75s cubic-bezier(.22,1,.36,1);
     }
-    @keyframes modalSlideDown {
-      0%   { opacity:0; transform:translateY(-90px) scale(.96); }
-      60%  { opacity:1; transform:translateY(8px) scale(1.01); }
-      100% { opacity:1; transform:translateY(0) scale(1); }
-    }
-
-    /* Animated top gradient line */
-    .modal-topbar {
+    .drawer-topbar {
       position:absolute;top:0;left:0;right:0;height:3px;
-      background:linear-gradient(90deg,#2563eb,#06b6d4,#4f46e5,#2563eb);
+      background:linear-gradient(90deg,#dc2626,#ef4444,#b91c1c,#dc2626);
       background-size:200% 100%;
       animation:lineSlide 3s linear infinite;
-      box-shadow:0 0 18px rgba(37,99,235,.7);
+      box-shadow:0 0 18px rgba(220,38,38,.7);
     }
-    @keyframes lineSlide {
-      0% { background-position:0% 0; }
-      100% { background-position:200% 0; }
+    .drawer-brand {
+      display:flex;align-items:center;gap:12px;margin-top:6px;
     }
-
-    /* Corner glows */
-    .mglow {
-      position:absolute;border-radius:50%;pointer-events:none;
+    .drawer-av {
+      width:52px;height:52px;border-radius:14px;
+      border:2px solid var(--border2);overflow:hidden;flex-shrink:0;
+      box-shadow:0 0 20px rgba(220,38,38,.3);
     }
-    .mglow.tl{width:280px;height:280px;top:-100px;right:-80px;background:radial-gradient(circle,rgba(37,99,235,.2),transparent 70%);animation:gPulse 5s ease-in-out infinite;}
-    .mglow.br{width:240px;height:240px;bottom:-90px;left:-60px;background:radial-gradient(circle,rgba(6,182,212,.18),transparent 70%);animation:gPulse 6s ease-in-out infinite reverse;}
-    @keyframes gPulse {
-      0%,100% { transform:scale(1);opacity:.8; }
-      50%      { transform:scale(1.2);opacity:1; }
-    }
-
-    .modal-head {
-      display:flex;justify-content:space-between;align-items:flex-start;
-      gap:16px;margin-bottom:20px;position:relative;z-index:1;
-    }
-
-    .modal-icon-wrap {
-      display:flex;align-items:center;gap:14px;
-    }
-    .modal-avatar {
-      width:58px;height:58px;border-radius:50%;
-      border:2.5px solid var(--border2);
-      object-fit:cover;
-      box-shadow:0 0 24px rgba(37,99,235,.4);
-      flex-shrink:0;
-    }
-    .modal-title-wrap {}
-    .modal-subtitle {
-      font-size:11px;font-weight:600;color:var(--cyan2);
-      text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;
-    }
-    .modal-title {
+    .drawer-av img { width:100%;height:100%;object-fit:cover; }
+    .drawer-brand-name {
       font-family:'Playfair Display',serif;
-      font-size:clamp(20px,3vw,28px);
-      font-weight:900;
-      line-height:1.2;
-      background:var(--grad);
-      background-size:200%;
-      -webkit-background-clip:text;background-clip:text;
-      color:transparent;
+      font-size:16px;font-weight:800;
+      background:var(--grad);background-size:200%;
+      -webkit-background-clip:text;background-clip:text;color:transparent;
       animation:gradShift 5s linear infinite;
     }
+    .drawer-brand-sub { font-size:11px;color:var(--muted2);margin-top:2px; }
 
-    .modal-close {
-      width:40px;height:40px;border-radius:50%;
-      border:1.5px solid var(--border2);
-      background:rgba(37,99,235,.1);
-      color:var(--blue3);font-size:17px;
-      cursor:pointer;flex-shrink:0;
-      display:grid;place-items:center;
-      transition:all .2s;
+    .drawer-close {
+      position:absolute;top:16px;right:16px;
+      width:36px;height:36px;border-radius:50%;
+      border:1.5px solid var(--border2);background:rgba(220,38,38,.1);
+      color:var(--red3);font-size:15px;cursor:pointer;
+      display:grid;place-items:center;transition:all .2s;
     }
-    .modal-close:hover { background:var(--blue);color:#fff; }
+    .drawer-close:hover { background:var(--red);color:#fff; }
 
-    /* Divider in modal */
-    .mdivider {
-      height:1px;
-      background:linear-gradient(90deg,transparent,var(--border2),transparent);
-      margin:18px 0;
-      position:relative;z-index:1;
+    .drawer-nav { padding:16px 12px; }
+    .drawer-section-label {
+      font-size:10px;font-weight:700;color:var(--muted2);
+      text-transform:uppercase;letter-spacing:1.5px;
+      padding:8px 12px 4px;
     }
 
-    .modal-body {
-      font-size:15px;line-height:1.88;
-      color:var(--muted);
-      position:relative;z-index:1;
-      margin-bottom:22px;
+    .ditem {
+      display:flex;align-items:center;gap:14px;
+      text-decoration:none;color:var(--text);font-size:14px;
+      font-weight:600;border-radius:12px;
+      padding:13px 16px;transition:all .25s;
+      margin-bottom:4px;border:1px solid transparent;
+      animation:drawerItemIn .4s ease both;
     }
-    .modal-body strong{color:var(--blue3);font-weight:700;}
-    .modal-body .acc{color:#fbbf24;font-weight:700;}
-    .modal-body .grn{color:#34d399;font-weight:700;}
-    .modal-body .vio{color:#a78bfa;font-weight:700;}
+    .ditem:nth-child(1){animation-delay:.05s;}
+    .ditem:nth-child(2){animation-delay:.1s;}
+    .ditem:nth-child(3){animation-delay:.15s;}
+    .ditem:nth-child(4){animation-delay:.2s;}
+    .ditem:nth-child(5){animation-delay:.25s;}
+    .ditem:nth-child(6){animation-delay:.3s;}
+    @keyframes drawerItemIn {
+      from { opacity:0;transform:translateX(-20px); }
+      to   { opacity:1;transform:translateX(0); }
+    }
+    .ditem:hover {
+      background:rgba(220,38,38,.1);border-color:var(--border);
+      color:var(--red3);padding-left:22px;
+      box-shadow:0 4px 20px rgba(220,38,38,.1);
+    }
+    .ditem .dic {
+      width:36px;height:36px;border-radius:10px;
+      background:rgba(220,38,38,.12);
+      display:grid;place-items:center;flex-shrink:0;
+      font-size:14px;color:var(--red3);
+      transition:all .25s;
+    }
+    .ditem:hover .dic {
+      background:rgba(220,38,38,.22);
+      box-shadow:0 0 14px rgba(220,38,38,.25);
+    }
 
-    .modal-grid {
-      display:grid;grid-template-columns:1fr 1fr;
-      gap:11px;position:relative;z-index:1;
+    .drawer-divider {
+      height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);
+      margin:12px 16px;
     }
 
-    .gbtn {
-      min-height:50px;border-radius:var(--r);border:none;
-      color:#fff;font-family:'Plus Jakarta Sans',sans-serif;
-      font-size:14px;font-weight:700;cursor:pointer;
-      display:flex;align-items:center;justify-content:center;
-      gap:9px;text-decoration:none;
-      transition:transform .2s,filter .2s,box-shadow .2s;
+    .drawer-footer {
+      padding:16px 20px 24px;border-top:1px solid var(--border);
+      margin-top:8px;
     }
-    .gbtn:hover { transform:translateY(-2px);filter:brightness(1.1); }
-    .gbtn.fb   { background:linear-gradient(135deg,#1877f2,#4299e1);box-shadow:0 5px 20px rgba(24,119,242,.35); }
-    .gbtn.zl   { background:linear-gradient(135deg,#0068ff,#06b6d4);box-shadow:0 5px 20px rgba(0,104,255,.35); }
-    .gbtn.c1h  { background:rgba(255,255,255,.07);border:1.5px solid var(--border); }
-    .gbtn.cnow { background:var(--grad);background-size:200%;animation:gradShift 5s linear infinite;box-shadow:0 5px 22px rgba(37,99,235,.4); }
+    .drawer-footer-text {
+      font-size:12px;color:var(--muted2);line-height:1.7;margin-bottom:12px;
+    }
+    .theme-toggle-draw {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 14px;border-radius:10px;
+      background:rgba(220,38,38,.08);border:1px solid var(--border);
+    }
+    .theme-toggle-draw span { font-size:13px;font-weight:600;color:var(--muted); }
 
     /* ━━━━━━ HEADER ━━━━━━ */
     .header {
       position:sticky;top:14px;z-index:60;
       display:flex;align-items:center;justify-content:space-between;
-      gap:14px;padding:11px 20px;
+      gap:14px;padding:10px 20px;
       border-radius:999px;
-      background:rgba(7,17,43,.84);
-      backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+      background:rgba(13,6,16,.88);
+      backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
       border:1.5px solid var(--border);
-      box-shadow:0 4px 32px rgba(0,0,0,.5),0 0 50px rgba(37,99,235,.07);
+      box-shadow:0 4px 40px rgba(0,0,0,.6),0 0 60px rgba(220,38,38,.06);
+      animation:headerIn .6s ease;
+    }
+    @keyframes headerIn {
+      from { opacity:0;transform:translateY(-20px); }
+      to   { opacity:1;transform:translateY(0); }
     }
 
     .brand { display:flex;align-items:center;gap:13px; }
     .brand-av {
-      width:48px;height:48px;border-radius:13px;
-      background:rgba(37,99,235,.15);border:1.5px solid var(--border2);
+      width:46px;height:46px;border-radius:12px;
+      background:rgba(220,38,38,.15);border:1.5px solid var(--border2);
       display:grid;place-items:center;overflow:hidden;flex-shrink:0;
-      box-shadow:0 0 22px rgba(37,99,235,.22);
+      box-shadow:0 0 22px rgba(220,38,38,.25);
+      animation:avatarPulse 3s ease-in-out infinite;
     }
-    .brand-av img { width:100%;height:100%;object-fit:cover;border-radius:12px; }
+    @keyframes avatarPulse {
+      0%,100%{box-shadow:0 0 22px rgba(220,38,38,.25);}
+      50%{box-shadow:0 0 35px rgba(220,38,38,.45);}
+    }
+    .brand-av img { width:100%;height:100%;object-fit:cover;border-radius:11px; }
     .brand-name {
       font-family:'Playfair Display',serif;
-      font-size:17px;font-weight:800;
+      font-size:16px;font-weight:800;
       background:var(--grad);background-size:200%;
       -webkit-background-clip:text;background-clip:text;color:transparent;
       animation:gradShift 6s linear infinite;
     }
-    .brand-sub { font-size:11px;color:var(--muted2);margin-top:1px;font-weight:500; }
+    .brand-sub { font-size:10px;color:var(--muted2);margin-top:1px;font-weight:500; }
 
-    .hright { display:flex;align-items:center;gap:10px; }
+    .hright { display:flex;align-items:center;gap:8px; }
 
     .online-pill {
       display:inline-flex;align-items:center;gap:7px;
-      padding:6px 14px;border-radius:999px;
-      background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.28);
-      color:#34d399;font-size:12px;font-weight:600;
+      padding:6px 13px;border-radius:999px;
+      background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);
+      color:var(--red3);font-size:12px;font-weight:600;
     }
     .online-pill::before {
       content:'';width:7px;height:7px;border-radius:50%;
-      background:#10b981;box-shadow:0 0 8px #10b981;
+      background:var(--red2);box-shadow:0 0 8px var(--red2);
       animation:pulse 2s ease-in-out infinite;
     }
 
-    .menu-btn {
-      width:48px;height:48px;border-radius:13px;
-      border:1.5px solid var(--border);
-      background:rgba(37,99,235,.07);
+    .theme-btn {
+      width:42px;height:42px;border-radius:11px;
+      border:1.5px solid var(--border);background:rgba(220,38,38,.07);
       cursor:pointer;display:grid;place-items:center;
-      color:var(--blue3);font-size:17px;
-      transition:all .25s;
+      color:var(--red3);font-size:16px;transition:all .25s;
     }
-    .menu-btn:hover {
-      background:rgba(37,99,235,.18);
-      border-color:var(--border2);
-      box-shadow:0 0 22px rgba(37,99,235,.3);
-      transform:scale(1.06);
+    .theme-btn:hover {
+      background:rgba(220,38,38,.18);border-color:var(--border2);
+      box-shadow:0 0 18px rgba(220,38,38,.3);transform:rotate(20deg);
     }
 
-    .menu-wrap { position:relative; }
-    .menu-panel {
-      display:none;position:absolute;top:calc(100% + 12px);right:0;
-      width:240px;background:var(--dark2);
-      border:1.5px solid var(--border2);border-radius:var(--r-lg);
-      padding:10px;
-      box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 50px rgba(37,99,235,.15);
-      animation:dropDown .28s cubic-bezier(.16,1,.3,1);z-index:200;
+    .menu-btn {
+      width:44px;height:44px;border-radius:12px;
+      border:1.5px solid var(--border);background:rgba(220,38,38,.07);
+      cursor:pointer;display:grid;place-items:center;
+      color:var(--red3);font-size:17px;transition:all .25s;
+      position:relative;overflow:hidden;
     }
-    .menu-panel.show { display:block; }
-
-    .mitem {
-      display:flex;align-items:center;gap:12px;
-      text-decoration:none;color:var(--text);font-size:14px;
-      font-weight:600;border-radius:11px;
-      padding:11px 14px;transition:all .2s;
-      margin-bottom:3px;border:1px solid transparent;
+    .menu-btn::before {
+      content:'';position:absolute;inset:0;
+      background:radial-gradient(circle at center,rgba(220,38,38,.2),transparent);
+      opacity:0;transition:opacity .25s;
     }
-    .mitem:last-child { margin-bottom:0; }
-    .mitem:hover { background:rgba(37,99,235,.12);border-color:var(--border);color:var(--blue3);padding-left:18px; }
-    .mitem i {
-      width:30px;height:30px;border-radius:9px;
-      background:rgba(37,99,235,.12);
-      display:grid;place-items:center;flex-shrink:0;
-      font-size:13px;color:var(--blue3);
+    .menu-btn:hover { border-color:var(--border2);transform:scale(1.07); }
+    .menu-btn:hover::before { opacity:1; }
+    .menu-btn .bar {
+      display:block;width:18px;height:2px;background:var(--red3);
+      border-radius:2px;transition:all .35s cubic-bezier(.16,1,.3,1);
+      position:absolute;
     }
+    .menu-btn .bar.b1 { transform:translateY(-5px); }
+    .menu-btn .bar.b2 { transform:translateY(0); }
+    .menu-btn .bar.b3 { transform:translateY(5px); }
+    .menu-btn.active .bar.b1 { transform:translateY(0) rotate(45deg); }
+    .menu-btn.active .bar.b2 { opacity:0;transform:scaleX(0); }
+    .menu-btn.active .bar.b3 { transform:translateY(0) rotate(-45deg); }
 
     /* ━━━━━━ TICKER ━━━━━━ */
     .ticker {
-      margin-top:20px;overflow:hidden;border-radius:999px;
-      background:rgba(37,99,235,.06);border:1px solid var(--border);
-      padding:9px 0;
+      margin-top:18px;overflow:hidden;border-radius:999px;
+      background:rgba(220,38,38,.06);border:1px solid var(--border);
+      padding:9px 0;position:relative;
     }
+    .ticker::before,.ticker::after {
+      content:'';position:absolute;top:0;bottom:0;width:60px;z-index:1;pointer-events:none;
+    }
+    .ticker::before { left:0;background:linear-gradient(90deg,var(--dark),transparent); }
+    .ticker::after  { right:0;background:linear-gradient(270deg,var(--dark),transparent); }
     .ticker-track {
       display:flex;white-space:nowrap;
-      animation:tickerRun 32s linear infinite;
+      animation:tickerRun 30s linear infinite;
     }
     .titem {
       display:inline-flex;align-items:center;gap:8px;
-      padding:0 28px;font-size:12px;font-weight:600;
-      color:var(--blue4);letter-spacing:.4px;
+      padding:0 26px;font-size:12px;font-weight:600;
+      color:var(--red4);letter-spacing:.4px;
     }
-    .titem i { color:var(--cyan2);font-size:10px; }
+    .titem i { color:var(--red2);font-size:9px;animation:pulse 1.5s infinite; }
 
     /* ━━━━━━ HERO ━━━━━━ */
     .hero {
-      margin-top:22px;padding:44px;
+      margin-top:20px;padding:44px;
       border-radius:var(--r-xl);
       background:var(--card);
       border:1.5px solid var(--border);
       position:relative;overflow:hidden;
       backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-      box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 50px rgba(37,99,235,.06);
+      box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 60px rgba(220,38,38,.06);
+      animation:fadeUp .7s ease;
     }
     .hero-line {
       position:absolute;top:0;left:0;right:0;height:2px;
-      background:linear-gradient(90deg,transparent,var(--blue2),var(--cyan2),transparent);
+      background:linear-gradient(90deg,transparent,var(--red2),var(--red3),transparent);
       animation:shimmer 4s linear infinite;background-size:200% 100%;
     }
     .hglow {
       position:absolute;border-radius:50%;pointer-events:none;
     }
-    .hglow.a{width:400px;height:400px;top:-150px;right:-80px;background:radial-gradient(circle,rgba(37,99,235,.1),transparent 70%);animation:floatSlow 10s ease-in-out infinite;}
-    .hglow.b{width:300px;height:300px;bottom:-120px;left:-60px;background:radial-gradient(circle,rgba(6,182,212,.08),transparent 70%);animation:floatSlow 12s ease-in-out infinite reverse;}
+    .hglow.a{width:420px;height:420px;top:-160px;right:-90px;background:radial-gradient(circle,rgba(220,38,38,.1),transparent 70%);animation:floatSlow 10s ease-in-out infinite;}
+    .hglow.b{width:300px;height:300px;bottom:-120px;left:-60px;background:radial-gradient(circle,rgba(185,28,28,.08),transparent 70%);animation:floatSlow 12s ease-in-out infinite reverse;}
 
     .hero-badge {
       display:inline-flex;align-items:center;gap:8px;
       padding:6px 14px;border-radius:999px;
-      background:rgba(37,99,235,.12);border:1px solid var(--border2);
-      font-size:11px;font-weight:700;color:var(--blue3);
+      background:rgba(220,38,38,.12);border:1px solid var(--border2);
+      font-size:11px;font-weight:700;color:var(--red3);
       text-transform:uppercase;letter-spacing:.8px;
       position:relative;z-index:1;
     }
     .hero-badge::before {
       content:'';width:6px;height:6px;border-radius:50%;
-      background:var(--cyan2);box-shadow:0 0 8px var(--cyan2);
+      background:var(--red2);box-shadow:0 0 8px var(--red2);
       animation:pulse 1.8s ease-in-out infinite;
     }
 
@@ -397,7 +589,7 @@
       color:var(--muted);max-width:800px;position:relative;z-index:1;
     }
     .hero-text em { font-style:normal;font-weight:700; }
-    .t1{color:var(--blue3);}.t2{color:#fbbf24;}.t3{color:#34d399;}.t4{color:var(--cyan2);}
+    .t1{color:var(--red3);}.t2{color:#fbbf24;}.t3{color:#34d399;}.t4{color:var(--red4);}
 
     .hero-stats {
       display:flex;flex-wrap:wrap;gap:12px;
@@ -406,18 +598,24 @@
     .scard {
       display:flex;align-items:center;gap:12px;
       padding:12px 20px;border-radius:var(--r);
-      background:rgba(255,255,255,.04);
+      background:rgba(255,255,255,.03);
       border:1.5px solid var(--border);
       transition:all .3s;
     }
     .scard:hover {
-      border-color:var(--border2);background:rgba(37,99,235,.1);
-      transform:translateY(-3px);box-shadow:0 10px 30px rgba(37,99,235,.15);
+      border-color:var(--border2);background:rgba(220,38,38,.08);
+      transform:translateY(-4px) scale(1.02);box-shadow:0 12px 35px rgba(220,38,38,.15);
     }
     .scard-ic {
       width:40px;height:40px;border-radius:11px;
-      background:rgba(37,99,235,.15);display:grid;place-items:center;
-      font-size:17px;color:var(--blue3);flex-shrink:0;
+      background:rgba(220,38,38,.15);display:grid;place-items:center;
+      font-size:17px;color:var(--red3);flex-shrink:0;
+      animation:iconSpin 8s linear infinite;
+    }
+    @keyframes iconSpin {
+      0%,85%,100% { transform:rotate(0deg); }
+      90% { transform:rotate(20deg); }
+      95% { transform:rotate(-10deg); }
     }
     .scard-v { font-size:15px;font-weight:800;color:var(--text); }
     .scard-l { font-size:11px;color:var(--muted2);margin-top:1px; }
@@ -431,7 +629,70 @@
     .sline.r{background:linear-gradient(270deg,var(--border),transparent);}
     .stext {
       font-size:12px;font-weight:700;text-transform:uppercase;
-      letter-spacing:1.5px;color:var(--blue3);white-space:nowrap;
+      letter-spacing:1.5px;color:var(--red3);white-space:nowrap;
+    }
+
+    /* ━━━━━━ STATS BOX ━━━━━━ */
+    .stats-box {
+      margin-top:24px;
+      border-radius:var(--r-xl);
+      background:var(--card);
+      border:1.5px solid var(--border);
+      backdrop-filter:blur(20px);
+      overflow:hidden;
+      box-shadow:0 20px 60px rgba(0,0,0,.4),0 0 60px rgba(220,38,38,.06);
+      animation:fadeUp .7s ease .1s both;
+    }
+    .stats-topbar {
+      height:3px;
+      background:linear-gradient(90deg,#dc2626,#ef4444,#b91c1c,#dc2626);
+      background-size:200% 100%;animation:lineSlide 3s linear infinite;
+      box-shadow:0 0 16px rgba(220,38,38,.6);
+    }
+    .stats-inner { padding:32px 36px; }
+    .stats-title {
+      font-family:'Playfair Display',serif;
+      font-size:20px;font-weight:800;
+      background:var(--grad);background-size:200%;
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+      animation:gradShift 5s linear infinite;
+      margin-bottom:24px;display:flex;align-items:center;gap:10px;
+    }
+    .stats-grid {
+      display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;
+    }
+    .stat-card {
+      padding:20px;border-radius:var(--r);
+      background:rgba(220,38,38,.06);border:1.5px solid var(--border);
+      text-align:center;position:relative;overflow:hidden;
+      transition:all .3s;
+    }
+    .stat-card::before {
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:var(--grad);background-size:200%;
+      animation:lineSlide 3s linear infinite;opacity:0;transition:opacity .3s;
+    }
+    .stat-card:hover { border-color:var(--border2);transform:translateY(-4px); }
+    .stat-card:hover::before { opacity:1; }
+    .stat-card-ic {
+      width:48px;height:48px;border-radius:14px;
+      background:rgba(220,38,38,.12);display:grid;place-items:center;
+      font-size:20px;color:var(--red3);margin:0 auto 12px;
+      animation:iconSpin 6s linear infinite;
+    }
+    .stat-card-v {
+      font-family:'Playfair Display',serif;
+      font-size:26px;font-weight:900;color:var(--text);
+    }
+    .stat-card-l { font-size:11px;color:var(--muted2);margin-top:4px;font-weight:600; }
+
+    .chart-wrap {
+      position:relative;height:260px;
+    }
+    .chart-title {
+      font-size:13px;font-weight:700;color:var(--red3);
+      text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;
+      display:flex;align-items:center;gap:8px;
     }
 
     /* ━━━━━━ CARDS (APPS) ━━━━━━ */
@@ -445,15 +706,12 @@
       overflow:hidden;position:relative;
       backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
       box-shadow:0 8px 30px rgba(0,0,0,.4);
-      transition:transform .3s ease,border-color .3s,box-shadow .3s;
+      transition:transform .35s ease,border-color .35s,box-shadow .35s;
       animation:fadeUp .6s ease both;
     }
-    .card:nth-child(1){animation-delay:.1s;}
-    .card:nth-child(2){animation-delay:.2s;}
-    .card:nth-child(3){animation-delay:.3s;}
     .card:hover {
-      transform:translateY(-10px);border-color:var(--border2);
-      box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 50px rgba(37,99,235,.2);
+      transform:translateY(-12px) scale(1.02);border-color:var(--border2);
+      box-shadow:0 28px 80px rgba(0,0,0,.5),0 0 60px rgba(220,38,38,.2);
     }
     .card-tline {
       position:absolute;top:0;left:0;right:0;height:2px;
@@ -465,17 +723,24 @@
 
     .card-img-w { position:relative;overflow:hidden; }
     .card-img { width:100%;aspect-ratio:16/10;object-fit:cover;display:block;transition:transform .5s; }
-    .card:hover .card-img { transform:scale(1.06); }
+    .card:hover .card-img { transform:scale(1.08); }
     .card-img-ov {
       position:absolute;inset:0;
-      background:linear-gradient(to bottom,transparent 30%,rgba(4,11,26,.9));
+      background:linear-gradient(to bottom,transparent 25%,rgba(6,4,9,.9));
     }
     .card-badge {
       position:absolute;top:12px;left:12px;
       padding:5px 13px;border-radius:999px;
-      background:rgba(0,0,0,.65);backdrop-filter:blur(10px);
-      border:1px solid var(--border2);color:var(--blue3);
+      background:rgba(0,0,0,.7);backdrop-filter:blur(10px);
+      border:1px solid var(--border2);color:var(--red3);
       font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+    }
+    .card-dl-count {
+      position:absolute;bottom:10px;right:10px;
+      padding:4px 10px;border-radius:999px;
+      background:rgba(220,38,38,.2);backdrop-filter:blur(8px);
+      border:1px solid rgba(220,38,38,.4);color:var(--red4);
+      font-size:11px;font-weight:700;
     }
 
     .card-body { padding:22px;display:flex;flex-direction:column;gap:13px;flex:1; }
@@ -486,11 +751,11 @@
     .ctags { display:flex;flex-wrap:wrap;gap:7px; }
     .ctag {
       padding:4px 11px;border-radius:999px;
-      background:rgba(37,99,235,.1);border:1px solid var(--border);
-      font-size:11px;font-weight:600;color:var(--blue4);
+      background:rgba(220,38,38,.1);border:1px solid var(--border);
+      font-size:11px;font-weight:600;color:var(--red4);
     }
     .card-desc { font-size:13.5px;line-height:1.78;color:var(--muted);flex:1; }
-    .card-desc .c1{color:var(--blue3);font-weight:700;}
+    .card-desc .c1{color:var(--red3);font-weight:700;}
     .card-desc .c2{color:#fbbf24;font-weight:700;}
     .card-desc .c3{color:#34d399;font-weight:700;}
 
@@ -505,18 +770,17 @@
     }
     .btnd::before {
       content:'';position:absolute;top:-50%;left:-70%;width:50%;height:200%;
-      background:linear-gradient(90deg,transparent,rgba(255,255,255,.13),transparent);
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);
       transform:skewX(-20deg);transition:left .55s;
     }
     .btnd:hover::before { left:130%; }
     .btnd:hover { transform:translateY(-3px); }
-    .btnd.v1{background:var(--grad);background-size:200%;animation:gradShift 5s linear infinite;box-shadow:0 6px 24px rgba(37,99,235,.45);}
-    .btnd.v2{background:var(--grad2);box-shadow:0 6px 24px rgba(8,145,178,.45);}
-    .btnd.v3{background:var(--grad3);box-shadow:0 6px 24px rgba(124,58,237,.45);}
-    .btnd.v1:hover{box-shadow:0 12px 35px rgba(37,99,235,.55);}
-    .btnd.v2:hover{box-shadow:0 12px 35px rgba(8,145,178,.55);}
-    .btnd.v3:hover{box-shadow:0 12px 35px rgba(124,58,237,.55);}
-
+    .btnd.v1{background:var(--grad);background-size:200%;animation:gradShift 5s linear infinite;box-shadow:0 6px 24px rgba(220,38,38,.45);}
+    .btnd.v2{background:var(--grad2);box-shadow:0 6px 24px rgba(185,28,28,.45);}
+    .btnd.v3{background:var(--grad3);box-shadow:0 6px 24px rgba(239,68,68,.45);}
+    .btnd.v1:hover{box-shadow:0 14px 40px rgba(220,38,38,.55);}
+    .btnd.v2:hover{box-shadow:0 14px 40px rgba(185,28,28,.55);}
+    .btnd.v3:hover{box-shadow:0 14px 40px rgba(239,68,68,.55);}
     .bcont,.bloading{display:inline-flex;align-items:center;gap:8px;}
     .bloading{display:none;}
     .btnd.loading .bcont{display:none;}
@@ -526,70 +790,49 @@
 
     /* ━━━━━━ ADMIN PROFILE ━━━━━━ */
     .admin-box {
-      margin-top:24px;
-      border-radius:var(--r-xl);
-      background:var(--card);
-      border:1.5px solid var(--border);
-      backdrop-filter:blur(20px);
-      -webkit-backdrop-filter:blur(20px);
+      margin-top:24px;border-radius:var(--r-xl);
+      background:var(--card);border:1.5px solid var(--border);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
       overflow:hidden;
-      box-shadow:0 20px 60px rgba(0,0,0,.45),0 0 60px rgba(37,99,235,.07);
-      position:relative;
-      animation:fadeUp .7s ease .15s both;
+      box-shadow:0 20px 60px rgba(0,0,0,.45),0 0 60px rgba(220,38,38,.07);
+      position:relative;animation:fadeUp .7s ease .15s both;
     }
-
-    /* Top shimmer bar */
     .admin-topbar {
       height:3px;
-      background:linear-gradient(90deg,#2563eb,#06b6d4,#4f46e5,#2563eb);
-      background-size:200% 100%;
-      animation:lineSlide 3s linear infinite;
-      box-shadow:0 0 16px rgba(37,99,235,.6);
+      background:linear-gradient(90deg,#dc2626,#ef4444,#b91c1c,#dc2626);
+      background-size:200% 100%;animation:lineSlide 3s linear infinite;
+      box-shadow:0 0 16px rgba(220,38,38,.6);
     }
-
     .admin-inner { padding:36px; }
-
-    .admin-head {
-      display:flex;align-items:center;gap:26px;
-      flex-wrap:wrap;
-    }
-
-    /* Round avatar */
-    .admin-av-wrap {
-      position:relative;flex-shrink:0;
-    }
+    .admin-head { display:flex;align-items:center;gap:26px;flex-wrap:wrap; }
+    .admin-av-wrap { position:relative;flex-shrink:0; }
     .admin-av-ring {
-      width:110px;height:110px;border-radius:50%;
-      padding:3px;
-      background:linear-gradient(135deg,#2563eb,#06b6d4,#4f46e5);
-      box-shadow:0 0 30px rgba(37,99,235,.5),0 0 60px rgba(6,182,212,.25);
+      width:110px;height:110px;border-radius:50%;padding:3px;
+      background:linear-gradient(135deg,#dc2626,#ef4444,#b91c1c);
+      box-shadow:0 0 30px rgba(220,38,38,.5),0 0 60px rgba(185,28,28,.25);
       animation:ringGlow 4s ease-in-out infinite;
     }
     .admin-av {
-      width:100%;height:100%;border-radius:50%;
-      object-fit:cover;
-      border:3px solid var(--dark2);
-      display:block;
+      width:100%;height:100%;border-radius:50%;object-fit:cover;
+      border:3px solid var(--dark2);display:block;
     }
     .admin-av-badge {
       position:absolute;bottom:2px;right:2px;
       width:24px;height:24px;border-radius:50%;
-      background:#10b981;border:2.5px solid var(--dark2);
-      box-shadow:0 0 10px rgba(16,185,129,.5);
-      display:grid;place-items:center;
-      font-size:10px;color:#fff;
+      background:#dc2626;border:2.5px solid var(--dark2);
+      box-shadow:0 0 10px rgba(220,38,38,.5);
+      display:grid;place-items:center;font-size:10px;color:#fff;
     }
     @keyframes ringGlow {
-      0%,100%{box-shadow:0 0 30px rgba(37,99,235,.5),0 0 60px rgba(6,182,212,.2);}
-      50%    {box-shadow:0 0 50px rgba(37,99,235,.7),0 0 90px rgba(6,182,212,.35);}
+      0%,100%{box-shadow:0 0 30px rgba(220,38,38,.5),0 0 60px rgba(185,28,28,.2);}
+      50%    {box-shadow:0 0 55px rgba(220,38,38,.75),0 0 100px rgba(185,28,28,.35);}
     }
-
     .admin-info { flex:1;min-width:220px; }
     .admin-role {
       display:inline-flex;align-items:center;gap:7px;
       padding:5px 13px;border-radius:999px;
-      background:rgba(37,99,235,.12);border:1px solid var(--border2);
-      font-size:11px;font-weight:700;color:var(--cyan2);
+      background:rgba(220,38,38,.12);border:1px solid var(--border2);
+      font-size:11px;font-weight:700;color:var(--red3);
       text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;
     }
     .admin-name {
@@ -599,13 +842,8 @@
       -webkit-background-clip:text;background-clip:text;
       color:transparent;animation:gradShift 5s linear infinite;
     }
-    .admin-alias {
-      font-size:14px;color:var(--muted2);margin-top:4px;font-weight:500;
-      font-style:italic;
-    }
-    .admin-socials {
-      display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;
-    }
+    .admin-alias { font-size:14px;color:var(--muted2);margin-top:4px;font-weight:500;font-style:italic; }
+    .admin-socials { display:flex;flex-wrap:wrap;gap:8px;margin-top:14px; }
     .asbtn {
       display:inline-flex;align-items:center;gap:7px;
       padding:8px 16px;border-radius:999px;
@@ -613,11 +851,10 @@
       transition:all .2s;border:1px solid transparent;
     }
     .asbtn.fb { background:rgba(24,119,242,.15);border-color:rgba(24,119,242,.3);color:#60a5fa; }
-    .asbtn.zl { background:rgba(0,104,255,.15);border-color:rgba(0,104,255,.3);color:var(--cyan2); }
-    .asbtn.ph { background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:#34d399; }
-    .asbtn:hover { transform:translateY(-2px); filter:brightness(1.2); }
+    .asbtn.zl { background:rgba(0,104,255,.15);border-color:rgba(0,104,255,.3);color:#22d3ee; }
+    .asbtn.ph { background:rgba(220,38,38,.15);border-color:rgba(220,38,38,.3);color:var(--red3); }
+    .asbtn:hover { transform:translateY(-2px);filter:brightness(1.2); }
 
-    /* Divider */
     .adiv {
       height:1px;margin:28px 0;
       background:linear-gradient(90deg,transparent,var(--border2) 20%,var(--border2) 80%,transparent);
@@ -626,150 +863,93 @@
     .adiv::before {
       content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
       width:8px;height:8px;border-radius:50%;
-      background:var(--blue2);box-shadow:0 0 10px var(--blue2);
+      background:var(--red2);box-shadow:0 0 10px var(--red2);
     }
-
-    /* About grid */
-    .about-grid {
-      display:grid;grid-template-columns:1fr 1fr;gap:16px;
-    }
+    .about-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
     .about-card {
       padding:18px;border-radius:var(--r);
-      background:rgba(255,255,255,.03);border:1px solid var(--border);
-      transition:all .3s;
+      background:rgba(255,255,255,.03);border:1px solid var(--border);transition:all .3s;
     }
     .about-card:hover {
-      background:rgba(37,99,235,.07);border-color:var(--border2);
-      transform:translateY(-3px);box-shadow:0 10px 30px rgba(37,99,235,.12);
+      background:rgba(220,38,38,.06);border-color:var(--border2);
+      transform:translateY(-3px);box-shadow:0 10px 30px rgba(220,38,38,.1);
     }
-    .about-card-head {
-      display:flex;align-items:center;gap:10px;margin-bottom:10px;
-    }
+    .about-card-head { display:flex;align-items:center;gap:10px;margin-bottom:10px; }
     .about-ic {
       width:36px;height:36px;border-radius:10px;
-      background:rgba(37,99,235,.15);display:grid;place-items:center;
-      font-size:15px;color:var(--blue3);flex-shrink:0;
+      background:rgba(220,38,38,.15);display:grid;place-items:center;
+      font-size:15px;color:var(--red3);flex-shrink:0;
     }
-    .about-label { font-size:12px;font-weight:700;color:var(--blue3);text-transform:uppercase;letter-spacing:.8px; }
+    .about-label { font-size:12px;font-weight:700;color:var(--red3);text-transform:uppercase;letter-spacing:.8px; }
     .about-val { font-size:14px;color:var(--muted);line-height:1.7; }
     .about-val strong { color:var(--text);font-weight:700; }
 
-    /* Skills */
     .skills-row { display:flex;flex-wrap:wrap;gap:8px;margin-top:20px; }
     .skill-tag {
       padding:6px 14px;border-radius:999px;
-      background:rgba(37,99,235,.1);border:1px solid var(--border2);
-      font-size:12px;font-weight:600;color:var(--blue4);
-      transition:all .2s;cursor:default;
+      background:rgba(220,38,38,.1);border:1px solid var(--border2);
+      font-size:12px;font-weight:600;color:var(--red4);
+      transition:all .25s;cursor:default;
     }
     .skill-tag:hover {
-      background:rgba(37,99,235,.2);transform:translateY(-2px);
-      box-shadow:0 4px 14px rgba(37,99,235,.2);
+      background:rgba(220,38,38,.2);transform:translateY(-2px);
+      box-shadow:0 4px 14px rgba(220,38,38,.2);
     }
 
     /* ━━━━━━ DONATION SECTION ━━━━━━ */
     .donate-box {
-      margin-top:24px;
-      border-radius:var(--r-xl);
-      background:var(--card);
-      border:1.5px solid var(--border);
-      backdrop-filter:blur(20px);
-      -webkit-backdrop-filter:blur(20px);
-      overflow:hidden;
-      box-shadow:0 20px 60px rgba(0,0,0,.45),0 0 60px rgba(37,99,235,.07);
-      position:relative;
-      animation:fadeUp .7s ease .25s both;
+      margin-top:24px;border-radius:var(--r-xl);background:var(--card);
+      border:1.5px solid var(--border);backdrop-filter:blur(20px);
+      overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.45);
+      position:relative;animation:fadeUp .7s ease .25s both;
     }
-
-    /* Animated rainbow border effect (meme style) */
     .donate-memeborder {
       height:4px;
-      background:linear-gradient(90deg,#f43f5e,#f97316,#eab308,#22c55e,#06b6d4,#6366f1,#a855f7,#f43f5e);
-      background-size:300% 100%;
-      animation:memeLine 2.5s linear infinite;
-      box-shadow:0 0 12px rgba(100,100,255,.5);
+      background:linear-gradient(90deg,#dc2626,#ef4444,#fbbf24,#22c55e,#06b6d4,#dc2626);
+      background-size:300% 100%;animation:memeLine 2.5s linear infinite;
+      box-shadow:0 0 12px rgba(220,38,38,.5);
     }
-    @keyframes memeLine {
-      0%   { background-position:0% 0; }
-      100% { background-position:300% 0; }
-    }
-
+    @keyframes memeLine { 0%{background-position:0% 0;}100%{background-position:300% 0;} }
     .donate-inner { padding:36px; }
-
-    .donate-head {
-      display:flex;align-items:center;gap:14px;margin-bottom:8px;
-    }
+    .donate-head { display:flex;align-items:center;gap:14px;margin-bottom:8px; }
     .donate-ic {
       width:48px;height:48px;border-radius:14px;
       background:rgba(234,179,8,.12);border:1.5px solid rgba(234,179,8,.3);
-      display:grid;place-items:center;
-      font-size:22px;
-      box-shadow:0 0 20px rgba(234,179,8,.2);
-      flex-shrink:0;
+      display:grid;place-items:center;font-size:22px;
+      box-shadow:0 0 20px rgba(234,179,8,.2);flex-shrink:0;
     }
     .donate-title {
       font-family:'Playfair Display',serif;
       font-size:22px;font-weight:800;color:var(--text);line-height:1.25;
     }
     .donate-title span{color:#fbbf24;}
-
-    .donate-sub {
-      font-size:14.5px;line-height:1.85;color:var(--muted);margin-bottom:26px;
-    }
+    .donate-sub { font-size:14.5px;line-height:1.85;color:var(--muted);margin-bottom:26px; }
     .donate-sub em{font-style:normal;font-weight:700;}
-    .donate-sub .da{color:#fbbf24;} .donate-sub .db{color:#34d399;}
-    .donate-sub .dc{color:var(--blue3);} .donate-sub .dd{color:#a78bfa;}
-
-    /* Order images grid */
+    .donate-sub .da{color:#fbbf24;}.donate-sub .db{color:#34d399;}
+    .donate-sub .dc{color:var(--red3);}.donate-sub .dd{color:#a78bfa;}
     .donate-imgs {
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-      gap:16px;
-      margin-bottom:26px;
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+      gap:16px;margin-bottom:26px;
     }
-
     .dimg-wrap {
       position:relative;border-radius:var(--r);overflow:hidden;
-      border:2px solid transparent;
-      background:var(--dark3);
-      transition:transform .3s,box-shadow .3s;
-      cursor:pointer;
+      border:2px solid transparent;background:var(--dark3);
+      transition:transform .3s,box-shadow .3s;cursor:pointer;
     }
-    /* Meme rainbow animated border */
     .dimg-wrap::before {
       content:'';position:absolute;inset:-2px;border-radius:calc(var(--r) + 2px);
-      background:linear-gradient(90deg,#f43f5e,#f97316,#eab308,#22c55e,#06b6d4,#6366f1,#a855f7,#f43f5e);
-      background-size:400% 100%;
-      animation:memeLine 3s linear infinite;
-      z-index:0;
+      background:linear-gradient(90deg,#dc2626,#ef4444,#fbbf24,#dc2626);
+      background-size:400% 100%;animation:memeLine 3s linear infinite;z-index:0;
     }
-    .dimg-inner {
-      position:relative;z-index:1;
-      border-radius:calc(var(--r) - 1px);
-      overflow:hidden;
-      background:var(--dark3);
-    }
-    .dimg-wrap:hover { transform:scale(1.03) translateY(-4px); box-shadow:0 16px 50px rgba(0,0,0,.5); }
-
-    .dimg {
-      width:100%;aspect-ratio:3/4;object-fit:cover;display:block;
-      transition:transform .4s;
-    }
+    .dimg-inner { position:relative;z-index:1;border-radius:calc(var(--r) - 1px);overflow:hidden;background:var(--dark3); }
+    .dimg-wrap:hover { transform:scale(1.03) translateY(-4px);box-shadow:0 16px 50px rgba(0,0,0,.5); }
+    .dimg { width:100%;aspect-ratio:3/4;object-fit:cover;display:block;transition:transform .4s; }
     .dimg-wrap:hover .dimg { transform:scale(1.06); }
-
-    .dimg-caption {
-      padding:10px 12px;
-      font-size:12px;font-weight:600;color:var(--muted);
-      text-align:center;background:rgba(7,17,43,.9);
-    }
-
-    /* Donation CTA */
+    .dimg-caption { padding:10px 12px;font-size:12px;font-weight:600;color:var(--muted);text-align:center;background:rgba(13,6,16,.9); }
     .donate-cta {
-      display:flex;flex-wrap:wrap;align-items:center;
-      justify-content:space-between;gap:16px;
+      display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;
       padding:22px;border-radius:var(--r);
-      background:rgba(234,179,8,.06);
-      border:1.5px solid rgba(234,179,8,.2);
+      background:rgba(234,179,8,.06);border:1.5px solid rgba(234,179,8,.2);
     }
     .donate-cta-text { font-size:14px;color:var(--muted);line-height:1.7; }
     .donate-cta-text strong { color:#fbbf24;font-size:15px; }
@@ -779,94 +959,64 @@
       background:linear-gradient(135deg,#d97706,#f59e0b);
       color:#000;font-family:'Plus Jakarta Sans',sans-serif;
       font-size:14px;font-weight:800;cursor:pointer;text-decoration:none;
-      transition:all .25s;flex-shrink:0;
-      box-shadow:0 5px 22px rgba(217,119,6,.4);
+      transition:all .25s;flex-shrink:0;box-shadow:0 5px 22px rgba(217,119,6,.4);
     }
     .donate-btn:hover { transform:translateY(-2px);box-shadow:0 10px 35px rgba(217,119,6,.55); }
 
     /* ━━━━━━ FOOTER ━━━━━━ */
     .footer {
-      margin-top:48px;padding:44px 36px;
-      border-radius:var(--r-xl);
-      background:var(--card);
-      border:1.5px solid var(--border);
-      backdrop-filter:blur(20px);
-      position:relative;overflow:hidden;
-      text-align:center;
-      box-shadow:0 20px 60px rgba(0,0,0,.4);
-      animation:fadeUp .7s ease .3s both;
+      margin-top:48px;padding:44px 36px;border-radius:var(--r-xl);
+      background:var(--card);border:1.5px solid var(--border);backdrop-filter:blur(20px);
+      position:relative;overflow:hidden;text-align:center;
+      box-shadow:0 20px 60px rgba(0,0,0,.4);animation:fadeUp .7s ease .3s both;
     }
     .footer::before {
       content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
-      background:linear-gradient(90deg,#2563eb,#06b6d4,#4f46e5,#2563eb);
+      background:linear-gradient(90deg,#dc2626,#ef4444,#b91c1c,#dc2626);
       background-size:200% 100%;animation:lineSlide 3s linear infinite;
-      box-shadow:0 0 16px rgba(37,99,235,.6);
+      box-shadow:0 0 16px rgba(220,38,38,.6);
     }
     .footer-glow {
       position:absolute;width:400px;height:400px;
       top:50%;left:50%;transform:translate(-50%,-50%);
-      border-radius:50%;
-      background:radial-gradient(circle,rgba(37,99,235,.06),transparent 70%);
+      border-radius:50%;background:radial-gradient(circle,rgba(220,38,38,.05),transparent 70%);
       pointer-events:none;animation:gPulse 8s ease-in-out infinite;
     }
-
     .footer-logo {
-      width:72px;height:72px;border-radius:50%;
-      padding:3px;
-      background:var(--grad);background-size:200%;
-      animation:gradShift 5s linear infinite;
-      box-shadow:0 0 30px rgba(37,99,235,.5);
-      margin:0 auto 20px;
-      position:relative;z-index:1;
+      width:72px;height:72px;border-radius:50%;padding:3px;
+      background:var(--grad);background-size:200%;animation:gradShift 5s linear infinite;
+      box-shadow:0 0 30px rgba(220,38,38,.5);margin:0 auto 20px;position:relative;z-index:1;
     }
     .footer-logo img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:3px solid var(--dark2);}
-
     .footer-name {
-      font-family:'Playfair Display',serif;
-      font-size:22px;font-weight:900;
+      font-family:'Playfair Display',serif;font-size:22px;font-weight:900;
       background:var(--grad);background-size:200%;
-      -webkit-background-clip:text;background-clip:text;
-      color:transparent;animation:gradShift 5s linear infinite;
-      margin-bottom:8px;position:relative;z-index:1;
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+      animation:gradShift 5s linear infinite;margin-bottom:8px;position:relative;z-index:1;
     }
-
-    .footer-text {
-      font-size:14px;color:var(--muted);
-      line-height:1.8;max-width:520px;
-      margin:0 auto 24px;position:relative;z-index:1;
-    }
-
-    .footer-links {
-      display:flex;flex-wrap:wrap;justify-content:center;gap:12px;
-      margin-bottom:28px;position:relative;z-index:1;
-    }
+    .footer-text { font-size:14px;color:var(--muted);line-height:1.8;max-width:520px;margin:0 auto 24px;position:relative;z-index:1; }
+    .footer-links { display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-bottom:28px;position:relative;z-index:1; }
     .flink {
       display:inline-flex;align-items:center;gap:8px;
-      padding:11px 22px;border-radius:999px;
-      font-size:13px;font-weight:700;text-decoration:none;
-      transition:all .25s;
+      padding:11px 22px;border-radius:999px;font-size:13px;font-weight:700;text-decoration:none;transition:all .25s;
     }
-    .flink.fb  { background:rgba(24,119,242,.12);border:1.5px solid rgba(24,119,242,.3);color:#60a5fa; }
-    .flink.zl  { background:rgba(0,104,255,.12);border:1.5px solid rgba(0,104,255,.3);color:var(--cyan2); }
-    .flink.ph  { background:rgba(16,185,129,.12);border:1.5px solid rgba(16,185,129,.3);color:#34d399; }
+    .flink.fb { background:rgba(24,119,242,.12);border:1.5px solid rgba(24,119,242,.3);color:#60a5fa; }
+    .flink.zl { background:rgba(0,104,255,.12);border:1.5px solid rgba(0,104,255,.3);color:#22d3ee; }
+    .flink.ph { background:rgba(220,38,38,.12);border:1.5px solid rgba(220,38,38,.3);color:var(--red3); }
     .flink:hover { transform:translateY(-2px);filter:brightness(1.2);box-shadow:0 8px 24px rgba(0,0,0,.3); }
-
-    .footer-divider {
-      height:1px;
-      background:linear-gradient(90deg,transparent,var(--border),transparent);
-      margin:0 0 20px;position:relative;z-index:1;
-    }
-    .footer-copy {
-      font-size:12px;color:var(--muted2);
-      position:relative;z-index:1;line-height:1.7;
-    }
-    .footer-copy a { color:var(--blue3);text-decoration:none; }
+    .footer-divider { height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0 0 20px;position:relative;z-index:1; }
+    .footer-copy { font-size:12px;color:var(--muted2);position:relative;z-index:1;line-height:1.7; }
+    .footer-copy a { color:var(--red3);text-decoration:none; }
 
     /* ━━━━━━ ANIMATIONS ━━━━━━ */
     @keyframes gradShift {
       0%   { background-position:0% 50%; }
       50%  { background-position:100% 50%; }
       100% { background-position:0% 50%; }
+    }
+    @keyframes lineSlide {
+      0% { background-position:0% 0; }
+      100% { background-position:200% 0; }
     }
     @keyframes pulse {
       0%,100% { opacity:1;transform:scale(1); }
@@ -884,119 +1034,122 @@
       0%   { transform:translateX(0); }
       100% { transform:translateX(-50%); }
     }
-    @keyframes dropDown {
-      from { opacity:0;transform:translateY(-10px) scale(.97); }
-      to   { opacity:1;transform:translateY(0) scale(1); }
-    }
     @keyframes fadeUp {
       from { opacity:0;transform:translateY(30px); }
       to   { opacity:1;transform:translateY(0); }
     }
     @keyframes spinAnim { to { transform:rotate(360deg); } }
+    @keyframes gPulse {
+      0%,100% { transform:translate(-50%,-50%) scale(1);opacity:.8; }
+      50%      { transform:translate(-50%,-50%) scale(1.2);opacity:1; }
+    }
 
     /* ━━━━━━ SCROLLBAR ━━━━━━ */
     ::-webkit-scrollbar { width:6px; }
     ::-webkit-scrollbar-track { background:var(--dark); }
-    ::-webkit-scrollbar-thumb { background:rgba(59,130,246,.4);border-radius:999px; }
-    ::-webkit-scrollbar-thumb:hover { background:rgba(59,130,246,.7); }
+    ::-webkit-scrollbar-thumb { background:rgba(220,38,38,.4);border-radius:999px; }
+    ::-webkit-scrollbar-thumb:hover { background:rgba(220,38,38,.7); }
 
     /* ━━━━━━ RESPONSIVE ━━━━━━ */
-    @media(max-width:960px){
-      .cards{grid-template-columns:repeat(2,1fr);}
-      .about-grid{grid-template-columns:1fr;}
-    }
+    @media(max-width:1024px){ .stats-grid{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:960px){ .cards{grid-template-columns:repeat(2,1fr);}.about-grid{grid-template-columns:1fr;} }
     @media(max-width:640px){
       .cards{grid-template-columns:1fr;}
-      .modal-grid{grid-template-columns:1fr;}
       .hero{padding:26px 22px;}
-      .admin-inner,.donate-inner{padding:24px 20px;}
+      .admin-inner,.donate-inner,.stats-inner{padding:24px 20px;}
       .footer{padding:30px 20px;}
       .online-pill{display:none;}
       .admin-head{gap:18px;}
       .admin-av-ring{width:88px;height:88px;}
       .donate-cta{flex-direction:column;}
+      .stats-grid{grid-template-columns:repeat(2,1fr);}
     }
     @media(max-width:420px){
       .hero-stats{flex-direction:column;}
       .admin-name{font-size:22px;}
+      .stats-grid{grid-template-columns:1fr;}
     }
+
+    /* ━━━━━━ TOAST ━━━━━━ */
+    #toast {
+      position:fixed;bottom:24px;right:24px;z-index:999;
+      padding:14px 22px;border-radius:999px;
+      background:rgba(13,6,16,.95);border:1.5px solid var(--border2);
+      color:var(--red3);font-size:13px;font-weight:700;
+      box-shadow:0 10px 40px rgba(0,0,0,.4);
+      display:flex;align-items:center;gap:10px;
+      transform:translateY(80px);opacity:0;
+      transition:all .4s cubic-bezier(.16,1,.3,1);pointer-events:none;
+    }
+    #toast.show { transform:translateY(0);opacity:1; }
   </style>
 </head>
 <body>
 
-<!-- ── AURORA ── -->
 <div class="aurora" aria-hidden="true">
   <div class="ab a"></div><div class="ab b"></div>
   <div class="ab c"></div><div class="ab d"></div>
 </div>
-
-<!-- ── RINGS ── -->
 <div class="fring r1" aria-hidden="true"></div>
 <div class="fring r2" aria-hidden="true"></div>
 <div class="fring r3" aria-hidden="true"></div>
-
-<!-- ── PARTICLES ── -->
+<div class="fring r4" aria-hidden="true"></div>
 <canvas id="pcvs" aria-hidden="true"></canvas>
-
-<!-- ── SCAN LINES ── -->
+<canvas id="waveCvs" aria-hidden="true"></canvas>
 <div class="scan" aria-hidden="true"></div>
 
-<!-- ══════════════════════════
-         WELCOME MODAL
-══════════════════════════════ -->
-<div id="wOverlay" role="dialog" aria-modal="true" aria-label="Chào mừng">
-  <div class="modal">
-    <div class="modal-topbar"></div>
-    <div class="mglow tl"></div>
-    <div class="mglow br"></div>
+<!-- SIDE DRAWER OVERLAY -->
+<div id="drawerOverlay"></div>
 
-    <!-- Head -->
-    <div class="modal-head">
-      <div class="modal-icon-wrap">
-        <img class="modal-avatar"
-          src="https://sf-static.upanhlaylink.com/img/image_202603122a4d724feb78745875f510b3aff53201.jpg"
-          alt="Hà Văn Huấn" />
-        <div class="modal-title-wrap">
-          <div class="modal-subtitle"><i class="fa-solid fa-star"></i> Admin chính thức</div>
-          <div class="modal-title">Hà Văn Huấn<br>Share Free</div>
-        </div>
+<!-- SIDE DRAWER -->
+<aside id="sideDrawer" role="navigation" aria-label="Menu điều hướng">
+  <div class="drawer-header">
+    <div class="drawer-topbar"></div>
+    <div class="drawer-brand">
+      <div class="drawer-av">
+        <img src="https://sf-static.upanhlaylink.com/img/image_202603122a4d724feb78745875f510b3aff53201.jpg" alt="Logo" />
       </div>
-      <button class="modal-close" id="closeTopBtn" title="Đóng">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+      <div>
+        <div class="drawer-brand-name">Hà Văn Huấn</div>
+        <div class="drawer-brand-sub">Share Free System</div>
+      </div>
     </div>
-
-    <div class="mdivider"></div>
-
-    <!-- Body -->
-    <div class="modal-body">
-      <strong><i class="fa-solid fa-gift" style="margin-right:6px"></i>Chia Sẻ Ứng Dụng Miễn Phí</strong> —
-      <span class="acc">Gian Lận Game Free Fire</span>,
-      <span class="grn">Mượt mà khi chơi game</span>,
-      <span class="vio">Giảm giật lag</span> — Tất cả đều hoàn toàn
-      <strong>miễn phí!</strong><br><br>
-      Kết nối với admin để nhận hỗ trợ và cập nhật phiên bản mới nhất.
+    <button class="drawer-close" id="drawerClose" aria-label="Đóng menu"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <nav class="drawer-nav">
+    <div class="drawer-section-label">Điều hướng</div>
+    <a class="ditem" href="#apps">
+      <div class="dic"><i class="fa-solid fa-mobile-screen-button"></i></div> Tất Cả App
+    </a>
+    <a class="ditem" href="#stats">
+      <div class="dic"><i class="fa-solid fa-chart-bar"></i></div> Thống Kê
+    </a>
+    <a class="ditem" href="#admin">
+      <div class="dic"><i class="fa-solid fa-user-tie"></i></div> Về Admin
+    </a>
+    <div class="drawer-divider"></div>
+    <div class="drawer-section-label">Liên kết</div>
+    <a class="ditem" href="https://www.facebook.com/share/1B527FwVu7/?mibextid=wwXIfr" target="_blank" rel="noopener">
+      <div class="dic"><i class="fa-brands fa-facebook-f"></i></div> Facebook
+    </a>
+    <a class="ditem" href="https://zalo.me/g/0qevnrkjbbhnraioxpos" target="_blank" rel="noopener">
+      <div class="dic"><i class="fa-regular fa-comment-dots"></i></div> Nhóm Zalo
+    </a>
+    <a class="ditem" href="tel:0379435045">
+      <div class="dic"><i class="fa-solid fa-phone"></i></div> 0379 435 045
+    </a>
+  </nav>
+  <div class="drawer-footer">
+    <div class="drawer-footer-text">
+      © 2026 Hà Văn Huấn — Share Free System<br>Tất cả quyền được bảo lưu.
     </div>
-
-    <!-- Social -->
-    <div class="modal-grid" style="margin-bottom:12px">
-      <a class="gbtn fb" href="https://www.facebook.com/share/1B527FwVu7/?mibextid=wwXIfr" target="_blank" rel="noopener">
-        <i class="fa-brands fa-facebook-f"></i> Facebook
-      </a>
-      <a class="gbtn zl" href="https://zalo.me/g/0qevnrkjbbhnraioxpos" target="_blank" rel="noopener">
-        <i class="fa-regular fa-comment-dots"></i> Nhóm Zalo
-      </a>
-    </div>
-    <div class="modal-grid">
-      <button class="gbtn c1h" id="close1HourBtn"><i class="fa-regular fa-clock"></i> Đóng 1 giờ</button>
-      <button class="gbtn cnow" id="closeNowBtn"><i class="fa-solid fa-check"></i> Vào xem ngay</button>
+    <div class="theme-toggle-draw">
+      <span><i class="fa-solid fa-circle-half-stroke" style="margin-right:8px"></i>Chế độ sáng/tối</span>
+      <button onclick="toggleTheme()" style="background:rgba(220,38,38,.15);border:1px solid var(--border2);color:var(--red3);padding:5px 12px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:700;" id="themeDrawBtn">Tối</button>
     </div>
   </div>
-</div>
+</aside>
 
-<!-- ══════════════════════════
-         MAIN
-══════════════════════════════ -->
 <div class="wrap">
 
   <!-- HEADER -->
@@ -1010,31 +1163,16 @@
         <div class="brand-sub">Share Free System</div>
       </div>
     </div>
-
     <div class="hright">
       <div class="online-pill">Online</div>
-      <div class="menu-wrap">
-        <button class="menu-btn" id="menuBtn" aria-label="Menu">
-          <i class="fa-solid fa-bars" id="menuIc"></i>
-        </button>
-        <nav class="menu-panel" id="menuPanel">
-          <a class="mitem" href="https://www.facebook.com/share/1B527FwVu7/?mibextid=wwXIfr" target="_blank" rel="noopener">
-            <i class="fa-brands fa-facebook-f"></i> Facebook
-          </a>
-          <a class="mitem" href="https://zalo.me/g/0qevnrkjbbhnraioxpos" target="_blank" rel="noopener">
-            <i class="fa-regular fa-comment-dots"></i> Nhóm Zalo
-          </a>
-          <a class="mitem" href="#apps" id="navApps">
-            <i class="fa-solid fa-mobile-screen-button"></i> Tất Cả App
-          </a>
-          <a class="mitem" href="#admin">
-            <i class="fa-solid fa-user-tie"></i> Về Admin
-          </a>
-          <a class="mitem" href="tel:0379435045">
-            <i class="fa-solid fa-phone"></i> Liên Hệ
-          </a>
-        </nav>
-      </div>
+      <button class="theme-btn" onclick="toggleTheme()" title="Chuyển chế độ sáng/tối" id="themeBtn">
+        <i class="fa-solid fa-moon" id="themeIc"></i>
+      </button>
+      <button class="menu-btn" id="menuBtn" aria-label="Mở menu" aria-expanded="false">
+        <span class="bar b1"></span>
+        <span class="bar b2"></span>
+        <span class="bar b3"></span>
+      </button>
     </div>
   </header>
 
@@ -1070,12 +1208,55 @@
       — Hãy kết nối qua Zalo: <em class="t1">0379435045</em>
     </p>
     <div class="hero-stats">
-      <div class="scard"><div class="scard-ic"><i class="fa-solid fa-fire"></i></div><div><div class="scard-v">4+ App</div><div class="scard-l">Miễn phí hoàn toàn</div></div></div>
+      <div class="scard"><div class="scard-ic"><i class="fa-solid fa-fire"></i></div><div><div class="scard-v" id="stat-total-apps">8+ App</div><div class="scard-l">Miễn phí hoàn toàn</div></div></div>
+      <div class="scard"><div class="scard-ic"><i class="fa-solid fa-download"></i></div><div><div class="scard-v" id="stat-downloads">70K+</div><div class="scard-l">Tổng lượt tải</div></div></div>
       <div class="scard"><div class="scard-ic"><i class="fa-solid fa-shield-halved"></i></div><div><div class="scard-v">Antiband</div><div class="scard-l">Bảo mật an toàn</div></div></div>
-      <div class="scard"><div class="scard-ic"><i class="fa-solid fa-mobile-screen-button"></i></div><div><div class="scard-v">iOS & Android</div><div class="scard-l">Đa thiết bị</div></div></div>
-      <div class="scard"><div class="scard-ic"><i class="fa-solid fa-headset"></i></div><div><div class="scard-v">24/7 Online</div><div class="scard-l">Hỗ trợ liên tục</div></div></div>
+      <div class="scard"><div class="scard-ic"><i class="fa-solid fa-headset"></i></div><div><div class="scard-v" id="stat-online">24/7</div><div class="scard-l">Hỗ trợ liên tục</div></div></div>
     </div>
   </section>
+
+  <!-- STATS SECTION -->
+  <div class="slabel" id="stats">
+    <div class="sline"></div>
+    <span class="stext"><i class="fa-solid fa-chart-bar" style="margin-right:7px"></i>Thống kê tham gia</span>
+    <div class="sline r"></div>
+  </div>
+
+  <div class="stats-box">
+    <div class="stats-topbar"></div>
+    <div class="stats-inner">
+      <div class="stats-title">
+        <i class="fa-solid fa-chart-line" style="color:var(--red3)"></i>
+        Bảng Thống Kê Hệ Thống
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-ic"><i class="fa-solid fa-mobile-screen-button"></i></div>
+          <div class="stat-card-v" id="stat-total-apps2">8</div>
+          <div class="stat-card-l">Tổng Ứng Dụng</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-ic"><i class="fa-solid fa-download"></i></div>
+          <div class="stat-card-v" id="stat-downloads2">70K+</div>
+          <div class="stat-card-l">Tổng Lượt Tải</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-ic"><i class="fa-solid fa-users"></i></div>
+          <div class="stat-card-v" id="stat-users2">10K+</div>
+          <div class="stat-card-l">Người Dùng</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-ic"><i class="fa-solid fa-star"></i></div>
+          <div class="stat-card-v">5.0</div>
+          <div class="stat-card-l">Đánh Giá TB</div>
+        </div>
+      </div>
+      <div class="chart-title"><i class="fa-solid fa-trophy" style="color:var(--red3)"></i> Top Lượt Tải Nhiều Nhất</div>
+      <div class="chart-wrap">
+        <canvas id="downloadChart"></canvas>
+      </div>
+    </div>
+  </div>
 
   <!-- APPS SECTION LABEL -->
   <div class="slabel" id="apps">
@@ -1084,222 +1265,13 @@
     <div class="sline r"></div>
   </div>
 
-  <!-- CARDS -->
-  <section class="cards">
-    <!-- Card 1 -->
-    <article class="card">
-      <div class="card-tline"></div>
-      <div class="card-img-w">
-        <img class="card-img" src="https://sf-static.upanhlaylink.com/img/image_20260312054cabe60eef3c6b7dae9e43a3c254df.jpg" alt="App Boost Super" loading="lazy" />
-        <div class="card-img-ov"></div>
-        <div class="card-badge">Boost Super</div>
-      </div>
-      <div class="card-body">
-        <h2 class="card-title">App Boost Super</h2>
-        <div class="ctags">
-          <span class="ctag"><i class="fa-brands fa-android" style="margin-right:4px"></i>Android</span>
-          <span class="ctag"><i class="fa-brands fa-apple" style="margin-right:4px"></i>iOS</span>
-          <span class="ctag">Free 100%</span>
-        </div>
-        <p class="card-desc">Sử dụng cho thiết bị <span class="c1">Android & iPhone</span>. Tăng tốc game, mượt hơn và <span class="c2">kéo tâm full</span> dễ dàng. <span class="c3">Tải ngay miễn phí!</span></p>
-        <button class="btnd v1 rbtn" data-link="https://link4m.com/zUoIho">
-          <span class="bcont"><i class="fa-solid fa-download"></i> Tải Ứng Dụng</span>
-          <span class="bloading"><span class="spin"></span> Đang xử lý…</span>
-        </button>
-      </div>
-    </article>
-
-
-
-
-
-
-
-
-
-
-
-      <article class="card">
-      <div class="card-tline"></div>
-      <div class="card-img-w">
-        <img class="card-img" src="https://sf-static.upanhlaylink.com/img/image_202603255ff843d78e24b2e7c2818eb5bcafbdf7.jpg" alt="App Boost Super" loading="lazy" />
-        <div class="card-img-ov"></div>
-        <div class="card-badge">APP SUPER V5</div>
-      </div>
-      <div class="card-body">
-        <h2 class="card-title">SUPER V5.0</h2>
-        <div class="ctags">
-          <span class="ctag"><i class="fa-brands fa-android" style="margin-right:4px"></i>Android</span>
-          <span class="ctag"><i class="fa-brands fa-apple" style="margin-right:4px"></i>iOS</span>
-          <span class="ctag">Free 100%</span>
-        </div>
-        <p class="card-desc">Sử dụng cho thiết bị <span class="c1">Android & iPhone</span>. Tăng tốc game, mượt hơn và <span class="c2">kéo tâm full</span> dễ dàng. <span class="c3">Tải ngay miễn phí!</span></p>
-        <button class="btnd v1 rbtn" data-link="https://www.mediafire.com/file/lzzbr2250i2rssv/APP+SUPER+PRO+V5.zip/file">
-          <span class="bcont"><i class="fa-solid fa-download"></i> Tải Ứng Dụng</span>
-          <span class="bloading"><span class="spin"></span> Đang xử lý…</span>
-        </button>
-      </div>
-    </article>
-
-
-    
-
-
-
-    
-
-
-  <article class="card">
-      <div class="card-tline"></div>
-      <div class="card-img-w">
-        <img class="card-img" src="https://sf-static.upanhlaylink.com/img/image_20260321906732bbc34b5046cc3148399bc354bc.jpg" alt="App Boost Super" loading="lazy" />
-        <div class="card-img-ov"></div>
-        <div class="card-badge">AIMLOCK SUPER V4.5</div>
-      </div>
-      <div class="card-body">
-        <h2 class="card-title">V4.5</h2>
-        <div class="ctags">
-          <span class="ctag"><i class="fa-brands fa-android" style="margin-right:4px"></i>Android</span>
-          <span class="ctag"><i class="fa-brands fa-apple" style="margin-right:4px"></i>iOS</span>
-          <span class="ctag">Free 100%</span>
-        </div>
-        <p class="card-desc">Sử dụng cho thiết bị <span class="c1">Android & iPhone</span>. Tăng tốc game, mượt hơn và <span class="c2">kéo tâm full</span> dễ dàng. <span class="c3">Tải ngay miễn phí!</span></p>
-        <button class="btnd v1 rbtn" data-link="https://www.mediafire.com/file/0vs1k8jjw9g4w6n/AIMLOCK+SUPER+V4.5.zip/file">
-          <span class="bcont"><i class="fa-solid fa-download"></i> Tải Ứng Dụng</span>
-          <span class="bloading"><span class="spin"></span> Đang xử lý…</span>
-        </button>
-      </div>
-    </article>
-
-
-
-
-
-
-    
-
-
-    <!-- Card 2 -->
-    <article class="card">
-      <div class="card-tline"></div>
-      <div class="card-img-w">
-        <img class="card-img" src="https://sf-static.upanhlaylink.com/img/image_2026031482830f9eb92e98cc56cb648d2c43592c.jpg" alt="Aimlock V2" loading="lazy" />
-        <div class="card-img-ov"></div>
-        <div class="card-badge">Aimlock V2</div>
-      </div>
-      <div class="card-body">
-        <h2 class="card-title">Aimlock Super V2</h2>
-        <div class="ctags">
-          <span class="ctag"><i class="fa-brands fa-android" style="margin-right:4px"></i>Android</span>
-          <span class="ctag"><i class="fa-brands fa-apple" style="margin-right:4px"></i>iOS</span>
-          <span class="ctag">Mới Nhất</span>
-        </div>
-        <p class="card-desc">Phiên bản <span class="c1">V2 mới nhất</span>. Update <span class="c2">Anti-Band</span>, tăng tốc game, kéo tâm full đỏ. <span class="c3">Tải ngay miễn phí!</span></p>
-        <button class="btnd v2 rbtn" data-link="https://www.mediafire.com/file/w4s5m6ywnixi7y2/AIMLOCK+SUPER+V2+--.zip/file">
-          <span class="bcont"><i class="fa-solid fa-download"></i> Tải Ứng Dụng</span>
-          <span class="bloading"><span class="spin"></span> Đang xử lý…</span>
-        </button>
-      </div>
-    </article>
-    
-    
-    
-    
-    
-    
-    
-    
-    <!-- Card 2 -->
-    <article class="card">
-      <div class="card-tline"></div>
-      <div class="card-img-w">
-        <img class="card-img" src="https://sf-static.upanhlaylink.com/img/image_20260315b6e784bf9855f81eea3f79c0a269ce16.jpg" alt="Aimlock V2" loading="lazy" />
-        <div class="card-img-ov"></div>
-        <div class="card-badge">Aimlock v3</div>
-      </div>
-      <div class="card-body">
-        <h2 class="card-title">Aimlock Super V3</h2>
-        <div class="ctags">
-          <span class="ctag"><i class="fa-brands fa-android" style="margin-right:4px"></i>Android</span>
-          <span class="ctag"><i class="fa-brands fa-apple" style="margin-right:4px"></i>iOS</span>
-          <span class="ctag">Mới Nhất</span>
-        </div>
-        <p class="card-desc">Phiên bản <span class="c1">V3 mới nhất</span>. Update <span class="c2">Anti-Band</span>, tăng tốc game, kéo tâm full đỏ. <span class="c3">Tải ngay miễn phí!</span></p>
-        <button class="btnd v2 rbtn" data-link="https://www.mediafire.com/file/maxrjnpfctgmcav/AIMLOCK_SUPER_V3.zip/file">
-          <span class="bcont"><i class="fa-solid fa-download"></i> Tải Ứng Dụng</span>
-          <span class="bloading"><span class="spin"></span> Đang xử lý…</span>
-        </button>
-      </div>
-    </article>
-    
-    
-
-
-
-
-
-    <!-- Card 2 -->
-    <article class="card">
-      <div class="card-tline"></div>
-      <div class="card-img-w">
-        <img class="card-img" src="https://sf-static.upanhlaylink.com/img/image_202603176806562eb98ebadeb577a084a58eeb61.jpg" alt="Aimlock V2" loading="lazy" />
-        <div class="card-img-ov"></div>
-        <div class="card-badge">APP SUPER</div>
-      </div>
-      <div class="card-body">
-        <h2 class="card-title">APP SUPER VIP</h2>
-        <div class="ctags">
-          <span class="ctag"><i class="fa-brands fa-android" style="margin-right:4px"></i>Android</span>
-          <span class="ctag"><i class="fa-brands fa-apple" style="margin-right:4px"></i>iOS</span>
-          <span class="ctag">Mới Nhất</span>
-        </div>
-        <p class="card-desc">Phiên bản <span class="c1"> mới nhất</span>. Update <span class="c2">Anti-Band</span>, tăng tốc game, kéo tâm full đỏ. <span class="c3">Tải ngay miễn phí!</span></p>
-        <button class="btnd v2 rbtn" data-link="https://www.mediafire.com/file/e716v2xfu5ymo3e/APP+SUPER+VIP.zip/file">
-          <span class="bcont"><i class="fa-solid fa-download"></i> Tải Ứng Dụng</span>
-          <span class="bloading"><span class="spin"></span> Đang xử lý…</span>
-        </button>
-      </div>
-    </article>
-
-
-
-
-    
-
-    
-    
-    
-        <!-- Card 2 -->
-    <article class="card">
-      <div class="card-tline"></div>
-      <div class="card-img-w">
-        <img class="card-img" src="https://sf-static.upanhlaylink.com/img/image_20260315cb294ab60c2d5b574190c461f0ec6d8c.jpg" alt="Aimlock V2" loading="lazy" />
-        <div class="card-img-ov"></div>
-        <div class="card-badge">AIMLOCK BOOST</div>
-      </div>
-      <div class="card-body">
-        <h2 class="card-title">AIMLOCK BOOST VIP</h2>
-        <div class="ctags">
-          <span class="ctag"><i class="fa-brands fa-android" style="margin-right:4px"></i>Android</span>
-          <span class="ctag"><i class="fa-brands fa-apple" style="margin-right:4px"></i>iOS</span>
-          <span class="ctag">Mới Nhất</span>
-        </div>
-        <p class="card-desc">Phiên bản <span class="c1">V3 mới nhất</span>. Update <span class="c2">Anti-Band</span>, tăng tốc game, kéo tâm full đỏ. <span class="c3">Tải ngay miễn phí!</span></p>
-        <button class="btnd v2 rbtn" data-link="https://www.mediafire.com/file/5l9xce1bbpog0ty/AIMLOCK_BOOST_.zip/file">
-          <span class="bcont"><i class="fa-solid fa-download"></i> Tải Ứng Dụng</span>
-          <span class="bloading"><span class="spin"></span> Đang xử lý…</span>
-        </button>
-      </div>
-    </article>
-    
-    
-    
-    
-    
-    
-    
-
-    
+  <!-- CARDS (rendered by JS) -->
+  <section class="cards" id="cards-container">
+    <div style="grid-column:1/-1;text-align:center;padding:60px 0;color:var(--muted);">
+      <span class="spin" style="width:32px;height:32px;border-width:3px;display:inline-block;margin-bottom:16px;"></span><br>
+      Đang tải dữ liệu...
+    </div>
+  </section>
 
   <!-- ADMIN PROFILE SECTION LABEL -->
   <div class="slabel" id="admin">
@@ -1312,14 +1284,10 @@
   <div class="admin-box">
     <div class="admin-topbar"></div>
     <div class="admin-inner">
-
-      <!-- Head: Avatar + Name -->
       <div class="admin-head">
         <div class="admin-av-wrap">
           <div class="admin-av-ring">
-            <img class="admin-av"
-              src="https://sf-static.upanhlaylink.com/img/image_202603122a4d724feb78745875f510b3aff53201.jpg"
-              alt="Hà Văn Huấn" />
+            <img class="admin-av" src="https://sf-static.upanhlaylink.com/img/image_202603122a4d724feb78745875f510b3aff53201.jpg" alt="Hà Văn Huấn" />
           </div>
           <div class="admin-av-badge"><i class="fa-solid fa-check" style="font-size:9px"></i></div>
         </div>
@@ -1340,55 +1308,39 @@
           </div>
         </div>
       </div>
-
-      <!-- Divider -->
       <div class="adiv"></div>
-
-      <!-- About grid -->
       <div class="about-grid">
         <div class="about-card">
           <div class="about-card-head">
             <div class="about-ic"><i class="fa-solid fa-user"></i></div>
             <div class="about-label">Giới thiệu</div>
           </div>
-          <div class="about-val">
-            Admin là <strong>Hà Văn Huấn</strong>, người sáng lập Share Free System — nơi chia sẻ phần mềm cheat game miễn phí, đào tạo hack, website, app chuyên sâu.
-          </div>
+          <div class="about-val">Admin là <strong>Hà Văn Huấn</strong>, người sáng lập Share Free System — nơi chia sẻ phần mềm cheat game miễn phí, đào tạo hack, website, app chuyên sâu.</div>
         </div>
         <div class="about-card">
           <div class="about-card-head">
             <div class="about-ic"><i class="fa-solid fa-code"></i></div>
             <div class="about-label">Chuyên môn</div>
           </div>
-          <div class="about-val">
-            Phát triển <strong>phần mềm game cheat</strong>, lập trình website & app, nghiên cứu bypass antiband cho Free Fire và các game phổ biến.
-          </div>
+          <div class="about-val">Phát triển <strong>phần mềm game cheat</strong>, lập trình website & app, nghiên cứu bypass antiband cho Free Fire và các game phổ biến.</div>
         </div>
         <div class="about-card">
           <div class="about-card-head">
             <div class="about-ic"><i class="fa-solid fa-trophy"></i></div>
             <div class="about-label">Thành tích</div>
           </div>
-          <div class="about-val">
-            Đã phát triển <strong>4+ ứng dụng</strong> cheat game chất lượng, hỗ trợ hàng nghìn người chơi, cộng đồng Facebook &amp; Zalo & TikTok ngày càng lớn mạnh.
-          </div>
+          <div class="about-val">Đã phát triển <strong>8+ ứng dụng</strong> cheat game chất lượng, hỗ trợ hàng nghìn người chơi, cộng đồng Facebook &amp; Zalo &amp; TikTok ngày càng lớn mạnh.</div>
         </div>
         <div class="about-card">
           <div class="about-card-head">
             <div class="about-ic"><i class="fa-solid fa-graduation-cap"></i></div>
             <div class="about-label">Đào tạo</div>
           </div>
-          <div class="about-val">
-            Nhận đào tạo 1-1 về <strong>Hack Game · Lập trình Web · Phát triển App</strong>. Liên hệ Zalo <strong>0379 435 045</strong> để biết thêm chi tiết.
-          </div>
+          <div class="about-val">Nhận đào tạo 1-1 về <strong>Hack Game · Lập trình Web · Phát triển App</strong>. Liên hệ Zalo <strong>0379 435 045</strong> để biết thêm chi tiết.</div>
         </div>
       </div>
-
-      <!-- Divider -->
       <div class="adiv"></div>
-
-      <!-- Skills -->
-      <div style="font-size:12px;font-weight:700;color:var(--blue3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:700;color:var(--red3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">
         <i class="fa-solid fa-tags" style="margin-right:7px"></i>Kỹ năng & Lĩnh vực
       </div>
       <div class="skills-row">
@@ -1415,47 +1367,35 @@
   <div class="donate-box">
     <div class="donate-memeborder"></div>
     <div class="donate-inner">
-
       <div class="donate-head">
         <div class="donate-ic">💰</div>
         <div class="donate-title">Ủng Hộ Admin <span>Huấn Hà</span></div>
       </div>
-
       <p class="donate-sub">
         Mọi sự <em class="da">đóng góp dù nhỏ</em> đều giúp Admin có thêm động lực và nguồn lực để
         <em class="db">phát triển thêm nhiều phần mềm miễn phí</em> chất lượng hơn nữa.
         Nếu bạn thấy các app hữu ích, hãy <em class="dc">góp một ít gạo để thổi cơm</em> —
         <em class="dd">mỗi ngàn đồng đều có giá trị!</em>
       </p>
-
-      <!-- Order / Evidence images with meme borders -->
       <div class="donate-imgs">
         <div class="dimg-wrap">
           <div class="dimg-inner">
-            <img class="dimg"
-              src="https://sf-static.upanhlaylink.com/img/image_2026031471123a1f4fd75b817f8c0f86745f07fe.jpg"
-              alt="Đơn hàng 1" loading="lazy" />
+            <img class="dimg" src="https://sf-static.upanhlaylink.com/img/image_2026031471123a1f4fd75b817f8c0f86745f07fe.jpg" alt="Đơn hàng 1" loading="lazy" />
             <div class="dimg-caption"><i class="fa-solid fa-receipt" style="margin-right:5px"></i>Tài Khoản #001</div>
           </div>
         </div>
-       
-        
       </div>
-
-      <!-- CTA -->
       <div class="donate-cta">
         <div class="donate-cta-text">
           <strong>Ủng Hộ Qua Momo Ha Van Huan</strong><br>
-       Số Tài Khoản : 0325575642
-       Tên Tài Khoản : Ha Van Huan
-       Tyger : Của ít lòng Nhiều Để Ủng Hộ Cho Admin Nhe . Cảm Ơn Bạn Rất Nhìu 
+          Số Tài Khoản: 0325575642<br>
+          Tên Tài Khoản: Ha Van Huan<br>
+          <span style="color:var(--muted2)">Của ít lòng nhiều — Cảm ơn bạn rất nhiều!</span>
         </div>
         <a class="donate-btn" href="" target="_blank" rel="noopener">
-          <i class="fa-solid fa-hand-holding-dollar"></i> 
-          HEY SERI
+          <i class="fa-solid fa-hand-holding-dollar"></i> Ủng Hộ Ngay
         </a>
       </div>
-
     </div>
   </div>
 
@@ -1469,196 +1409,260 @@
   <!-- FOOTER -->
   <footer class="footer">
     <div class="footer-glow"></div>
-
     <div class="footer-logo">
       <img src="https://sf-static.upanhlaylink.com/img/image_202603122a4d724feb78745875f510b3aff53201.jpg" alt="Logo Hà Văn Huấn" />
     </div>
-
     <div class="footer-name">Hà Văn Huấn</div>
-
     <p class="footer-text">
       Chia sẻ phần mềm miễn phí · Đào tạo Hack · Website · App<br>
       Liên hệ để được hỗ trợ, mua key hoặc đăng ký học.
     </p>
-
     <div class="footer-links">
-      <a class="flink fb" href="https://www.facebook.com/share/1B527FwVu7/?mibextid=wwXIfr" target="_blank" rel="noopener">
-        <i class="fa-brands fa-facebook-f"></i> Facebook
-      </a>
-      <a class="flink zl" href="https://zalo.me/g/0qevnrkjbbhnraioxpos" target="_blank" rel="noopener">
-        <i class="fa-regular fa-comment-dots"></i> Nhóm Zalo
-      </a>
-      <a class="flink ph" href="tel:0379435045">
-        <i class="fa-solid fa-phone-flip"></i> 0379 435 045
-      </a>
+      <a class="flink fb" href="https://www.facebook.com/share/1B527FwVu7/?mibextid=wwXIfr" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-f"></i> Facebook</a>
+      <a class="flink zl" href="https://zalo.me/g/0qevnrkjbbhnraioxpos" target="_blank" rel="noopener"><i class="fa-regular fa-comment-dots"></i> Nhóm Zalo</a>
+      <a class="flink ph" href="tel:0379435045"><i class="fa-solid fa-phone-flip"></i> 0379 435 045</a>
     </div>
-
     <div class="footer-divider"></div>
-
     <div class="footer-copy">
       © 2026 <a href="#">Hà Văn Huấn — Share Free System</a> · Tất cả quyền được bảo lưu.<br>
-     Hey brother is my &amp; Huan
+      Hey brother is my &amp; Huan
     </div>
   </footer>
 
 </div><!-- /wrap -->
 
+<!-- TOAST -->
+<div id="toast"><i class="fa-solid fa-check-circle"></i> <span id="toastMsg"></span></div>
+
 <script>
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/* ━━━━━━━━━━━━━━━━━━━━━━━━
    PARTICLES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+━━━━━━━━━━━━━━━━━━━━━━━━ */
 (function(){
   const cvs = document.getElementById('pcvs');
   const ctx = cvs.getContext('2d');
-  let W,H,pts=[],mx=null,my=null;
-  const COLS=['#2563eb','#3b82f6','#60a5fa','#06b6d4','#22d3ee','#4f46e5','#818cf8'];
+  let W, H, pts = [], mx = null, my = null;
+  const COLS = ['#dc2626','#ef4444','#f87171','#991b1b','#b91c1c','#fca5a5','#7f1d1d'];
 
-  function resize(){ W=cvs.width=innerWidth; H=cvs.height=innerHeight; }
+  function resize(){ W = cvs.width = innerWidth; H = cvs.height = innerHeight; }
   resize();
-  window.addEventListener('resize',()=>{ resize(); init(); });
-  window.addEventListener('mousemove',e=>{ mx=e.clientX; my=e.clientY; });
+  window.addEventListener('resize', () => { resize(); init(); });
+  window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
 
-  class P{
+  class P {
     constructor(){ this.r(); }
     r(){
-      this.x=Math.random()*W; this.y=Math.random()*H;
-      this.rad=Math.random()*1.6+.3;
-      this.vx=(Math.random()-.5)*.5; this.vy=(Math.random()-.5)*.5;
-      this.a=Math.random()*.55+.1; this.da=(Math.random()-.5)*.003;
-      this.c=COLS[Math.floor(Math.random()*COLS.length)];
+      this.x = Math.random() * W; this.y = Math.random() * H;
+      this.rad = Math.random() * 1.8 + .3;
+      this.vx = (Math.random() - .5) * .55; this.vy = (Math.random() - .5) * .55;
+      this.a = Math.random() * .55 + .1; this.da = (Math.random() - .5) * .003;
+      this.c = COLS[Math.floor(Math.random() * COLS.length)];
     }
     update(){
-      if(mx!==null){
-        const dx=this.x-mx,dy=this.y-my,d=Math.sqrt(dx*dx+dy*dy);
-        if(d<130){ const ang=Math.atan2(dy,dx); this.vx+=Math.cos(ang)*.022; this.vy+=Math.sin(ang)*.022; }
+      if (mx !== null) {
+        const dx = mx - this.x, dy = my - this.y, d = Math.sqrt(dx*dx+dy*dy);
+        if (d < 90) { this.vx -= dx/d*.04; this.vy -= dy/d*.04; }
       }
-      this.vx*=.995; this.vy*=.995;
-      this.x+=this.vx; this.y+=this.vy;
-      this.a+=this.da;
-      if(this.a<.05||this.a>.7) this.da*=-1;
-      if(this.x<0||this.x>W||this.y<0||this.y>H) this.r();
+      this.x += this.vx; this.y += this.vy;
+      this.a += this.da;
+      if (this.a <= 0 || this.a >= .7) this.da *= -1;
+      if (this.x < 0) this.x = W; if (this.x > W) this.x = 0;
+      if (this.y < 0) this.y = H; if (this.y > H) this.y = 0;
     }
     draw(){
-      ctx.save();
-      ctx.globalAlpha=this.a;
-      ctx.shadowBlur=8; ctx.shadowColor=this.c;
-      ctx.fillStyle=this.c;
       ctx.beginPath();
-      ctx.arc(this.x,this.y,this.rad,0,Math.PI*2);
+      ctx.arc(this.x, this.y, this.rad, 0, Math.PI * 2);
+      ctx.fillStyle = this.c + Math.floor(this.a * 255).toString(16).padStart(2,'0');
       ctx.fill();
-      ctx.restore();
     }
   }
 
   function init(){
-    pts=[];
-    const n=Math.min(170,Math.floor(W*H/7000));
-    for(let i=0;i<n;i++) pts.push(new P());
+    const count = Math.floor(W * H / 9000);
+    pts = Array.from({length: Math.min(count, 180)}, () => new P());
   }
+  init();
 
-  function connect(){
-    const MAX=115;
-    for(let a=0;a<pts.length;a++){
-      for(let b=a+1;b<pts.length;b++){
-        const dx=pts[a].x-pts[b].x,dy=pts[a].y-pts[b].y;
-        const d=Math.sqrt(dx*dx+dy*dy);
-        if(d<MAX){
-          ctx.save();
-          ctx.globalAlpha=(1-d/MAX)*.13;
-          ctx.strokeStyle='#3b82f6';
-          ctx.lineWidth=.7;
+  function drawLines(){
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+        const d = Math.sqrt(dx*dx+dy*dy);
+        if (d < 110) {
           ctx.beginPath();
-          ctx.moveTo(pts[a].x,pts[a].y);
-          ctx.lineTo(pts[b].x,pts[b].y);
+          ctx.moveTo(pts[i].x, pts[i].y);
+          ctx.lineTo(pts[j].x, pts[j].y);
+          ctx.strokeStyle = `rgba(220,38,38,${(1-d/110)*.15})`;
+          ctx.lineWidth = .8;
           ctx.stroke();
-          ctx.restore();
         }
       }
     }
   }
 
   function loop(){
-    ctx.clearRect(0,0,W,H);
-    pts.forEach(p=>{ p.update(); p.draw(); });
-    connect();
+    ctx.clearRect(0, 0, W, H);
+    pts.forEach(p => { p.update(); p.draw(); });
+    drawLines();
     requestAnimationFrame(loop);
   }
-
-  init(); loop();
+  loop();
 })();
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   MENU
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-const menuBtn=document.getElementById('menuBtn');
-const menuPanel=document.getElementById('menuPanel');
-const menuIc=document.getElementById('menuIc');
-const navApps=document.getElementById('navApps');
+/* ━━━━━━━━━━━━━━━━━━━━━━━━
+   WAVE CANVAS
+━━━━━━━━━━━━━━━━━━━━━━━━ */
+(function(){
+  const cvs = document.getElementById('waveCvs');
+  const ctx = cvs.getContext('2d');
+  let W, H, t = 0;
 
-function toggleMenu(force){
-  const open=typeof force==='boolean'?force:!menuPanel.classList.contains('show');
-  menuPanel.classList.toggle('show',open);
-  menuIc.className=open?'fa-solid fa-xmark':'fa-solid fa-bars';
+  function resize(){
+    W = cvs.width = innerWidth;
+    H = cvs.height = 220;
+    cvs.style.height = '220px';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function loop(){
+    ctx.clearRect(0, 0, W, H);
+    const waves = [
+      { amp: 28, freq: 0.012, speed: 0.022, y: H * 0.7, color: 'rgba(220,38,38,0.18)', offset: 0 },
+      { amp: 22, freq: 0.018, speed: 0.035, y: H * 0.75, color: 'rgba(239,68,68,0.12)', offset: 1.5 },
+      { amp: 18, freq: 0.009, speed: 0.015, y: H * 0.82, color: 'rgba(185,28,28,0.22)', offset: 3 },
+      { amp: 14, freq: 0.024, speed: 0.045, y: H * 0.88, color: 'rgba(252,165,165,0.08)', offset: 5 },
+    ];
+    waves.forEach(w => {
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      for (let x = 0; x <= W; x += 4) {
+        const y = w.y + Math.sin(x * w.freq + t * w.speed + w.offset) * w.amp
+                       + Math.sin(x * w.freq * 1.7 + t * w.speed * 0.7 + w.offset) * w.amp * 0.4;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(W, H); ctx.closePath();
+      ctx.fillStyle = w.color;
+      ctx.fill();
+    });
+    t++;
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━
+   DRAWER MENU
+━━━━━━━━━━━━━━━━━━━━━━━━ */
+const menuBtn = document.getElementById('menuBtn');
+const drawer = document.getElementById('sideDrawer');
+const drawerOverlay = document.getElementById('drawerOverlay');
+const drawerClose = document.getElementById('drawerClose');
+
+function openDrawer(){
+  drawer.classList.add('open');
+  drawerOverlay.classList.add('open');
+  menuBtn.classList.add('active');
+  menuBtn.setAttribute('aria-expanded','true');
+  document.body.style.overflow = 'hidden';
 }
-menuBtn.addEventListener('click',()=>toggleMenu());
-document.addEventListener('click',e=>{
-  if(!menuPanel.contains(e.target)&&!menuBtn.contains(e.target)) toggleMenu(false);
-});
-navApps&&navApps.addEventListener('click',()=>toggleMenu(false));
-document.querySelectorAll('.mitem').forEach(i=>i.addEventListener('click',()=>toggleMenu(false)));
-
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   MODAL
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-const overlay=document.getElementById('wOverlay');
-function closeModal(){ overlay.classList.remove('show'); }
-function showModal(){
-  const until=Number(localStorage.getItem('hideModalUntil')||'0');
-  if(Date.now()<until) return;
-  overlay.classList.add('show');
+function closeDrawer(){
+  drawer.classList.remove('open');
+  drawerOverlay.classList.remove('open');
+  menuBtn.classList.remove('active');
+  menuBtn.setAttribute('aria-expanded','false');
+  document.body.style.overflow = '';
 }
-document.getElementById('closeTopBtn').addEventListener('click',closeModal);
-document.getElementById('closeNowBtn').addEventListener('click',closeModal);
-document.getElementById('close1HourBtn').addEventListener('click',()=>{
-  localStorage.setItem('hideModalUntil',String(Date.now()+3600000));
-  closeModal();
-});
-overlay.addEventListener('click',e=>{ if(e.target===overlay) closeModal(); });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeModal(); toggleMenu(false); } });
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   DOWNLOAD BUTTONS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-document.querySelectorAll('.rbtn').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    if(btn.classList.contains('loading')) return;
-    btn.classList.add('loading'); btn.disabled=true;
-    setTimeout(()=>{ window.location.href=btn.dataset.link; },1300);
+menuBtn.addEventListener('click', () => {
+  drawer.classList.contains('open') ? closeDrawer() : openDrawer();
+});
+drawerClose.addEventListener('click', closeDrawer);
+drawerOverlay.addEventListener('click', closeDrawer);
+
+drawer.querySelectorAll('.ditem').forEach(item => {
+  item.addEventListener('click', () => {
+    if (item.getAttribute('href') && item.getAttribute('href').startsWith('#')) closeDrawer();
   });
 });
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/* ━━━━━━━━━━━━━━━━━━━━━━━━
+   THEME TOGGLE
+━━━━━━━━━━━━━━━━━━━━━━━━ */
+function toggleTheme(){
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  const ic = document.getElementById('themeIc');
+  const btn = document.getElementById('themeDrawBtn');
+  if (isDark) {
+    ic.className = 'fa-solid fa-sun';
+    if (btn) btn.textContent = 'Sáng';
+  } else {
+    ic.className = 'fa-solid fa-moon';
+    if (btn) btn.textContent = 'Tối';
+  }
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+}
+
+(function(){
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  const ic = document.getElementById('themeIc');
+  const btn = document.getElementById('themeDrawBtn');
+  if (saved === 'light') {
+    ic.className = 'fa-solid fa-sun';
+    if (btn) btn.textContent = 'Sáng';
+  }
+})();
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━
+   TOAST
+━━━━━━━━━━━━━━━━━━━━━━━━ */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━
    SCROLL REVEAL
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-const io=new IntersectionObserver(entries=>{
-  entries.forEach(en=>{
-    if(en.isIntersecting){
-      en.target.style.opacity='1';
-      en.target.style.transform='translateY(0)';
-      io.unobserve(en.target);
+━━━━━━━━━━━━━━━━━━━━━━━━ */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.animationPlayState = 'running';
     }
   });
-},{threshold:.08});
+}, { threshold: 0.1 });
 
-document.querySelectorAll('.scard,.about-card,.skill-tag,.donate-cta,.dimg-wrap').forEach(el=>{
-  el.style.opacity='0';
-  el.style.transform='translateY(22px)';
-  el.style.transition='opacity .55s ease,transform .55s ease';
-  io.observe(el);
+document.querySelectorAll('.card, .stat-card, .about-card').forEach(el => {
+  el.style.animationPlayState = 'paused';
+  observer.observe(el);
 });
 
-/* Init */
-showModal();
+/* ━━━━━━━━━━━━━━━━━━━━━━━━
+   SYNC STATS
+━━━━━━━━━━━━━━━━━━━━━━━━ */
+function syncStats(total, downloads, users){
+  const els = [
+    ['stat-total-apps', total + '+ App'],
+    ['stat-total-apps2', total.toString()],
+    ['stat-downloads', downloads > 1000 ? (downloads/1000).toFixed(1)+'K+' : downloads+'+'],
+    ['stat-downloads2', downloads > 1000 ? (downloads/1000).toFixed(1)+'K+' : downloads+'+'],
+    ['stat-users2', users > 1000 ? (users/1000).toFixed(1)+'K+' : users+'+'],
+  ];
+  els.forEach(([id, val]) => { const el = document.getElementById(id); if(el) el.textContent = val; });
+}
+
+if (window._fbDB) {
+  const { _fbDB: db, _fbRef: ref, _fbOnValue: onValue } = window;
+  onValue(ref(db, 'stats'), snap => {
+    const d = snap.val();
+    if (d) syncStats(d.totalApps||8, d.totalDownloads||70000, d.totalUsers||10000);
+  });
+}
 </script>
 </body>
 </html>
