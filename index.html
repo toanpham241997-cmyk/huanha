@@ -475,25 +475,19 @@
     .brand-av {
       width:42px;height:42px;border-radius:11px;
       background:rgba(0,195,255,.12);border:1.5px solid var(--border2);
-      display:grid;place-items:center;overflow:hidden;flex-shrink:0;
-      box-shadow:0 0 20px rgba(0,195,255,.2);
-      animation:avatarPulse 3s ease-in-out infinite;
+      overflow:hidden;box-shadow:0 0 18px rgba(0,195,255,.2);
     }
-    @keyframes avatarPulse {
-      0%,100%{box-shadow:0 0 20px rgba(0,195,255,.2);}
-      50%{box-shadow:0 0 32px rgba(0,195,255,.42);}
-    }
-    .brand-av img { width:100%;height:100%;object-fit:cover;border-radius:10px; }
+    .brand-av img { width:100%;height:100%;object-fit:cover; }
     .brand-name {
       font-family:'Playfair Display',serif;
       font-size:15px;font-weight:800;
       background:var(--grad-cyan);background-size:200%;
       -webkit-background-clip:text;background-clip:text;color:transparent;
-      animation:gradShift 6s linear infinite;
+      animation:gradShift 5s linear infinite;
     }
-    .brand-sub { font-size:10px;color:var(--muted2);margin-top:1px;font-weight:500; }
+    .brand-sub { font-size:10.5px;color:var(--muted2);margin-top:1px; }
 
-    .hright { display:flex;align-items:center;gap:7px; }
+    .hright { display:flex;align-items:center;gap:9px; }
 
     .online-pill {
       display:inline-flex;align-items:center;gap:6px;
@@ -1229,6 +1223,144 @@
     }
     #toast.show { transform:translateY(0);opacity:1; }
 
+    /* ━━━━━━ WELCOME MODAL ━━━━━━ */
+    #welcomeModalOverlay {
+      position:fixed;inset:0;
+      background:rgba(0,0,0,.75);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      z-index:1000;
+      display:flex;align-items:center;justify-content:center;
+      padding:18px;
+      opacity:0;pointer-events:none;
+      transition:opacity .4s ease;
+    }
+    #welcomeModalOverlay.open {
+      opacity:1;pointer-events:all;
+    }
+    #welcomeModalBox {
+      width:min(360px,100%);
+      background:linear-gradient(160deg,#05080d,#080d14,#060a0e);
+      border:1.5px solid rgba(0,195,255,.4);
+      border-radius:22px;
+      overflow:hidden;
+      position:relative;
+      box-shadow:0 30px 80px rgba(0,0,0,.8),0 0 60px rgba(0,195,255,.15);
+      transform:scale(.88) translateY(30px);
+      transition:transform .45s cubic-bezier(.16,1,.3,1);
+    }
+    #welcomeModalOverlay.open #welcomeModalBox {
+      transform:scale(1) translateY(0);
+    }
+    .wm-topline {
+      height:2.5px;
+      background:linear-gradient(90deg,#00c3ff,#06b6d4,#a78bfa,#00c3ff);
+      background-size:300% 100%;
+      animation:memeLine 2.5s linear infinite;
+      box-shadow:0 0 14px rgba(0,195,255,.7);
+    }
+    .wm-corner-tl,.wm-corner-br {
+      position:absolute;width:32px;height:32px;pointer-events:none;z-index:5;
+    }
+    .wm-corner-tl {
+      top:0;left:0;
+      border-top:2px solid #00c3ff;border-left:2px solid #00c3ff;
+      border-radius:22px 0 0 0;
+      box-shadow:-2px -2px 14px rgba(0,195,255,.45);
+    }
+    .wm-corner-br {
+      bottom:0;right:0;
+      border-bottom:2px solid #00c3ff;border-right:2px solid #00c3ff;
+      border-radius:0 0 22px 0;
+      box-shadow:2px 2px 14px rgba(0,195,255,.45);
+    }
+    .wm-close {
+      position:absolute;top:13px;right:13px;z-index:10;
+      width:30px;height:30px;border-radius:50%;
+      border:1.5px solid rgba(0,195,255,.35);
+      background:rgba(0,0,0,.55);
+      color:var(--blue3);font-size:13px;cursor:pointer;
+      display:grid;place-items:center;
+      transition:all .2s;
+      backdrop-filter:blur(6px);
+    }
+    .wm-close:hover { background:var(--blue);color:#000;border-color:var(--blue); }
+    .wm-body {
+      padding:28px 26px 26px;
+      text-align:center;
+    }
+    .wm-icon-wrap {
+      width:62px;height:62px;border-radius:18px;
+      background:linear-gradient(135deg,rgba(0,195,255,.15),rgba(167,139,250,.12));
+      border:1.5px solid rgba(0,195,255,.3);
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 16px;
+      box-shadow:0 0 24px rgba(0,195,255,.2);
+      font-size:26px;
+      animation:iconSpin 6s linear infinite;
+    }
+    .wm-label {
+      display:inline-flex;align-items:center;gap:6px;
+      padding:3px 12px;border-radius:999px;
+      background:rgba(0,195,255,.08);border:1px solid rgba(0,195,255,.25);
+      font-size:10px;font-weight:700;color:var(--blue3);
+      text-transform:uppercase;letter-spacing:1px;
+      margin-bottom:12px;
+    }
+    .wm-label::before {
+      content:'';width:5px;height:5px;border-radius:50%;
+      background:var(--blue);box-shadow:0 0 6px var(--blue);
+      animation:pulse 1.8s ease-in-out infinite;
+    }
+    .wm-title {
+      font-family:'Playfair Display',serif;
+      font-size:18px;font-weight:900;
+      line-height:1.35;
+      background:linear-gradient(135deg,#00c3ff,#7dd3fc,#a78bfa);
+      background-size:200%;
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+      animation:gradShift 4s linear infinite;
+      margin-bottom:8px;
+    }
+    .wm-sub {
+      font-size:13px;color:var(--muted);line-height:1.75;margin-bottom:20px;
+    }
+    .wm-sub strong { color:var(--blue3); }
+    .wm-zalo-btn {
+      display:inline-flex;align-items:center;justify-content:center;gap:10px;
+      width:100%;padding:13px 20px;border-radius:14px;
+      background:linear-gradient(135deg,#0062cc,#006eff,#22d3ee);
+      background-size:200%;animation:gradShift 4s linear infinite;
+      color:#fff;font-family:'Plus Jakarta Sans',sans-serif;
+      font-size:14px;font-weight:800;text-decoration:none;
+      box-shadow:0 6px 24px rgba(0,110,255,.4);
+      transition:all .25s;
+      position:relative;overflow:hidden;
+    }
+    .wm-zalo-btn::before {
+      content:'';position:absolute;top:-50%;left:-70%;width:50%;height:200%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+      transform:skewX(-20deg);transition:left .55s;
+    }
+    .wm-zalo-btn:hover::before { left:130%; }
+    .wm-zalo-btn:hover {
+      transform:translateY(-2px);
+      box-shadow:0 12px 36px rgba(0,110,255,.55);
+    }
+    .wm-zalo-btn .wm-btn-icon { font-size:16px; }
+    .wm-divider {
+      height:1px;margin:16px 0;
+      background:linear-gradient(90deg,transparent,rgba(0,195,255,.2),transparent);
+    }
+    .wm-skip {
+      font-size:11.5px;color:var(--muted2);cursor:pointer;
+      border:none;background:none;
+      font-family:'Plus Jakarta Sans',sans-serif;
+      font-weight:600;transition:color .2s;
+      padding:4px 10px;border-radius:6px;
+    }
+    .wm-skip:hover { color:var(--blue3); }
+
     /* ━━━━━━ RESPONSIVE ━━━━━━ */
     @media(max-width:1024px){ .stats-grid{grid-template-columns:repeat(2,1fr);} }
     @media(max-width:960px){ .cards{grid-template-columns:repeat(2,1fr);}.about-grid{grid-template-columns:1fr;} }
@@ -1252,6 +1384,32 @@
   </style>
 </head>
 <body>
+
+<!-- ━━━━━━ WELCOME MODAL ━━━━━━ -->
+<div id="welcomeModalOverlay">
+  <div id="welcomeModalBox">
+    <div class="wm-topline"></div>
+    <div class="wm-corner-tl"></div>
+    <div class="wm-corner-br"></div>
+    <button class="wm-close" id="wmCloseBtn" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
+    <div class="wm-body">
+      <div class="wm-icon-wrap">🎮</div>
+      <div class="wm-label">Thông báo từ Admin</div>
+      <div class="wm-title">Múc Đồ Chơi<br>Liên Hệ Zalo</div>
+      <p class="wm-sub">
+        Bạn muốn múc đồ chơi xịn?<br>
+        Nhắn ngay cho <strong>Huấn Hà</strong> qua Zalo nhé bạn yêu!<br>
+        Admin hỗ trợ nhanh <strong>24/7</strong> 💙
+      </p>
+      <a class="wm-zalo-btn" href="https://zalo.me/0379435045" target="_blank" rel="noopener">
+        <span class="wm-btn-icon"><i class="fa-regular fa-comment-dots"></i></span>
+        Nhắn Zalo Huấn Hà Ngay
+      </a>
+      <div class="wm-divider"></div>
+      <button class="wm-skip" id="wmSkipBtn">Bỏ qua, vào xem app</button>
+    </div>
+  </div>
+</div>
 
 <div class="aurora" aria-hidden="true">
   <div class="ab a"></div><div class="ab b"></div>
@@ -1806,6 +1964,31 @@ modalCloseBtn.addEventListener('click', closeAppModal);
 appModal.addEventListener('click', function(e){
   if (e.target === appModal) closeAppModal();
 });
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━
+   WELCOME MODAL
+━━━━━━━━━━━━━━━━━━━━━━━━ */
+(function(){
+  const overlay = document.getElementById('welcomeModalOverlay');
+  const closeBtn = document.getElementById('wmCloseBtn');
+  const skipBtn = document.getElementById('wmSkipBtn');
+
+  function closeWelcome(){
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  closeBtn.addEventListener('click', closeWelcome);
+  skipBtn.addEventListener('click', closeWelcome);
+  overlay.addEventListener('click', function(e){
+    if (e.target === overlay) closeWelcome();
+  });
+
+  setTimeout(function(){
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }, 600);
+})();
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━
    THEME TOGGLE
